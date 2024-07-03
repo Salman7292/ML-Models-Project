@@ -1,17 +1,15 @@
-.st-emotion-cache-18ni7ap {
+element.style {
+    color: white;
+    font-size: 12px;
+    text-align: left;
+    margin: 5px;
+    --hover-color: blue;
+    border: none;
+    background-color: rgb(129, 182, 34);
+}
 
-    background: red;
-}
-.st-emotion-cache-13ln4jf {
-    padding-left: 1rem;
-    padding-right: 1rem;
-    background: green;
+element.style {
+    background-color: #0d6efd;
+    border-radius: 5px;
     box-shadow: 2px 2px 7px -2px rgba(36, 2, 2, 0.75);
-}
-.st-emotion-cache-6qob1r {
-    position: relative;
-    height: 100%;
-    width: 100%;
-    overflow: overlay;
-    background: blue;
 }
