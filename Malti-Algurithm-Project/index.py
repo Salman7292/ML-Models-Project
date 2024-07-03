@@ -25,7 +25,7 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor ,GradientBoostingRegressor
 
 
-with open("style.css") as f:
+with open("Malti-Algurithm-Project/style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 st.title('Malti Model opertion on Dataset')
