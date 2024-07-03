@@ -47,7 +47,7 @@ selections = option_menu(
          "color": "rgb(255, 255, 255)"
           },
        "nav-link": {"color":"white","font-size": "12px", "text-align": "left", "margin":"5px", "--hover-color": "blue","border":"None"},
-        "nav-link-selected": {"background-color": "#81B622"},
+        "nav-link-selected": {"background-color": "#ffc107"},
 
 
 # .menu .container-xxl[data-v-5af006b8] {
