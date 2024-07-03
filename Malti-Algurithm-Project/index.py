@@ -35,7 +35,7 @@ with open("Malti-Algurithm-Project/style.css") as f:
 
 selections = option_menu(
         menu_title=None,
-        options=['Home', 'Display DataSet',"Data Visulization",'Inserting Data', 'Display Predication', 'How Model Perdict'],
+        options=['Home', 'Display DataSet',"Data Visualization",'Inserting Data', 'Display Prediction', 'How Model Predict'],
         icons=['house-fill', 'bi-display-fill', "bi-bar-chart-line-fill",'bi-database-fill-up', 'bi-easel-fill', 'bi-gear'],
         menu_icon="cast",  # Optional: Change the menu icon
         default_index=0 ,  # Optional: Set the default selected option
