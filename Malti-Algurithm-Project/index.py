@@ -24,12 +24,68 @@ from sklearn.tree import DecisionTreeRegressor
 # Importing the RandomForestRegressor class from scikit-learn to implement random forest regression models
 from sklearn.ensemble import RandomForestRegressor ,GradientBoostingRegressor
 
+from streamlit_option_menu import option_menu
 
-with open("Malti-Algurithm-Project/style.css") as f:
+st.set_page_config(layout="wide")
+
+with open("style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-st.title('Malti Model opertion on Dataset')
 
-with st.sidebar:
-    st.sidebar.title("Hello")
 
+selections = option_menu(
+        menu_title=None,
+        options=['Home', 'Display DataSet',"Data Visulization",'Inserting Data', 'Display Predication', 'How Model Perdict'],
+        icons=['house-fill', 'bi-display-fill', "bi-bar-chart-line-fill",'bi-database-fill-up', 'bi-easel-fill', 'bi-gear'],
+        menu_icon="cast",  # Optional: Change the menu icon
+        default_index=0 ,  # Optional: Set the default selected option
+        orientation='horizontal',
+        styles={
+        "container": {"padding": "5!important","background-color":"#0d6efd", "border-radius": ".0","font-color":"white","box-shadow":" 2px 2px 7px -2px rgba(36, 2, 2, 0.75)"},
+        "icon": {"color": "white", "font-size": "23px"}, 
+         "hr": {
+         "color": "rgb(255, 255, 255)"
+          },
+       "nav-link": {"color":"white","font-size": "15px", "text-align": "left", "margin":"5px", "--hover-color": "blue","border":"None"},
+        "nav-link-selected": {"background-color": "#81B622"},
+
+
+# .menu .container-xxl[data-v-5af006b8] {
+#     background-color: var(--secondary-background-color);
+#     /* border-radius:.5rem; */
+# }
+}
+
+    )
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+hide_streamlit_style = """
+<style>
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+</style>
+"""
+st.markdown(hide_streamlit_style,unsafe_allow_html=True)
