@@ -30,5 +30,6 @@ with open("Malti-Algurithm-Project/style.css") as f:
 
 st.title('Malti Model opertion on Dataset')
 
-
+with st.sidebar:
+    st.sidebar.title("Hello")
 
