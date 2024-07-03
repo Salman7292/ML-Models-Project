@@ -46,7 +46,7 @@ selections = option_menu(
          "hr": {
          "color": "rgb(255, 255, 255)"
           },
-       "nav-link": {"color":"white","font-size": "15px", "text-align": "left", "margin":"5px", "--hover-color": "blue","border":"None"},
+       "nav-link": {"color":"white","font-size": "12px", "text-align": "left", "margin":"5px", "--hover-color": "blue","border":"None"},
         "nav-link-selected": {"background-color": "#81B622"},
 
 
