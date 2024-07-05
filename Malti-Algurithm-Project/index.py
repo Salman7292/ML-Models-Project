@@ -211,7 +211,7 @@ if selections == 'Home':
     <title>Your Streamlit App Description</title>
     <style>
         .hero-section {
-        background-color: #f0f0f0; /* Set your background color */
+        background-color: #fff;
         padding: 80px 20px; /* Adjust padding as needed */
         text-align: center;
         font-family: Arial, sans-serif;
