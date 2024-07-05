@@ -266,6 +266,7 @@ elif selections == 'Upload DataSet':
         try:
             # Read the CSV file into a DataFrame
             data = pd.read_csv(uploaded_file)
+            data=data.dropna()
             st.success("File uploaded successfully!")
             # Display the DataFrame
 
