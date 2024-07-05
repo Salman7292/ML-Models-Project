@@ -1,3 +1,5 @@
+
+
 element.style {
     color: white;
     font-size: 12px;
@@ -16,7 +18,7 @@ element.style {
 
 .st-emotion-cache-1jicfl2 {
     width: 100%;
-    padding: 4rem 1rem 6rem;
+    padding: 4rem 3rem 6rem;
     min-width: auto;
     max-width: initial;
 }
@@ -44,6 +46,7 @@ element.style {
     padding: calc(1em - 1px);
     background: #e3f2fd;
     box-shadow: 2px 2px 7px -2px rgba(36, 2, 2, 0.75);
+    margin-bottom: 28px;
 }
 
 .st-b9 {
@@ -70,11 +73,14 @@ element.style {
 }
 
 .st-emotion-cache-j6qv4b p {
- 
-    color: white;
+    color: black;
 }
-
 .st-emotion-cache-7ym5gk {
 
     color: white;
+   
 }
+
+
+
+
