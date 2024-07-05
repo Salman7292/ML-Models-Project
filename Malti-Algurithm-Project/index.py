@@ -28,7 +28,7 @@ from streamlit_option_menu import option_menu
 
 
 st.set_page_config(
-        page_icon="Logo3.png",
+        page_icon="Malti-Algurithm-Project/logo3.png",
         page_title="Data Insights Predictor | app",
         layout="wide"
 
@@ -40,7 +40,7 @@ with open("Malti-Algurithm-Project/style.css") as f:
 
 
 with st.sidebar:
-    st.image("Logo3.png", use_column_width=True)
+    st.image("Malti-Algurithm-Project/logo3.png", use_column_width=True)
 
 
     # Adding a custom style with HTML and CSS
