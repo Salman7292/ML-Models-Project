@@ -302,6 +302,7 @@ elif selections == 'Upload DataSet':
             final_DataSet=data[option]
             st.subheader("Final DataSet")
             st.dataframe(final_DataSet)
+        
 
 
 
