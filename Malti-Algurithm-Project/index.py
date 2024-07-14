@@ -59,14 +59,15 @@ import time
 
 
 st.set_page_config(
-        page_icon="Malti-Algurithm-Project/logo3.png",
+        page_icon="Logo3.png",
         page_title="Data Insights Predictor | app",
-        layout="wide",
+        layout="wide"
+
         
         
             )
 
-with open("Malti-Algurithm-Project/style.css") as f:
+with open("style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 
@@ -75,7 +76,7 @@ flag1=0
 
 
 with st.sidebar:
-    st.image("Malti-Algurithm-Project/logo3.png", use_column_width=True)
+    st.image("Logo3.png", use_column_width=True)
 
 
     # Adding a custom style with HTML and CSS
@@ -288,14 +289,15 @@ selections = option_menu(
         "hr": {"color": "#0d6dfdbe"},  # Style for the horizontal line (very light grey)
         "nav-link": {
             "color": "#f9fafb",  # Light grey text color
-            "font-size": "14px",
+            "font-size": "12px",
             "text-align": "center",
             "margin": "0 10px",  # Adds space between the buttons
             "--hover-color": "#0761e97e",  # Slightly lighter grey for hover
             "padding": "10px 10px",
             "border-radius": "16px"
+
         },
-        "nav-link-selected": {"background-color": "#ffc107"},  # Green background for selected option
+        "nav-link-selected": {"background-color": "#ffc107","font-size": "12px",},  # Green background for selected option
     }
 )
 
@@ -357,6 +359,11 @@ if selections == 'Home':
     """
     # Display the hero section using markdown
     st.markdown(code, unsafe_allow_html=True)
+
+
+
+
+
 
 elif selections == 'Regression Models':
     st.markdown(
@@ -1389,16 +1396,6 @@ elif selections == 'Regression Models':
         st.error("No file uploaded yet!")
 
     # Load_DataSet_button = submation_file.form_submit_button("Load DataSet")
-
-
-
-    
-
-
-
-
-
-
 
 
 
@@ -3252,8 +3249,9 @@ elif selections == 'Classification Models':
 
                     LogisticRegression_model_accuracy=accuracy_score(y_test,Predication_by_LogisticRegression_model)
 
-                    LogisticRegression_model_accuracy=np.round(LogisticRegression_model_accuracy,1)*100
+                    LogisticRegression_model_accuracy=LogisticRegression_model_accuracy*100
 
+                    LogisticRegression_model_accuracy=round(LogisticRegression_model_accuracy,2)   
 
                     st.subheader(f"Model Accuracy : {LogisticRegression_model_accuracy} %")
 
@@ -3379,16 +3377,19 @@ elif selections == 'Classification Models':
 
                     DecisionTreeClassifier_model_accuracy=accuracy_score(y_test,Predication_by_DecisionTreeClassifier_model)
 
-                    DecisionTreeClassifier_model_accuracy=np.round(DecisionTreeClassifier_model_accuracy,1)*100
+                    DecisionTreeClassifier_model_accuracy=DecisionTreeClassifier_model_accuracy*100
 
+                    DecisionTreeClassifier_model_accuracy=round(DecisionTreeClassifier_model_accuracy,2)   
 
                     st.subheader(f"Model Accuracy : {DecisionTreeClassifier_model_accuracy} %")
+
 
                 
 
                 with Confusion_matrix_tab:
                     # Create the confusion matrix
                     cm_DecisionTreeClassifier_model = confusion_matrix(y_test, Predication_by_DecisionTreeClassifier_model)
+        
 
 
                     # creating_cunfusion_Matrix(cm,"Blues","LogisticRegression")
@@ -3513,10 +3514,13 @@ elif selections == 'Classification Models':
 
                     RandomForestClassifier_model_accuracy=accuracy_score(y_test,Predication_by_RandomForestClassifier_model)
 
-                    RandomForestClassifier_model_accuracy=np.round(RandomForestClassifier_model_accuracy,1)*100
+                    RandomForestClassifier_model_accuracy=RandomForestClassifier_model_accuracy*100
+
+                    RandomForestClassifier_model_accuracy=round(RandomForestClassifier_model_accuracy,2)                
 
 
                     st.subheader(f"Model Accuracy : {RandomForestClassifier_model_accuracy} %")
+
 
                 
 
@@ -3647,8 +3651,9 @@ elif selections == 'Classification Models':
 
                     GradientBoostingClassifier_model_accuracy=accuracy_score(y_test,Predication_by_GradientBoostingClassifier_model)
 
-                    GradientBoostingClassifier_model_accuracy=np.round(GradientBoostingClassifier_model_accuracy,1)*100
+                    GradientBoostingClassifier_model_accuracy=GradientBoostingClassifier_model_accuracy*100
 
+                    GradientBoostingClassifier_model_accuracy=round(GradientBoostingClassifier_model_accuracy,2)   
 
                     st.subheader(f"Model Accuracy : {GradientBoostingClassifier_model_accuracy} %")
 
@@ -3787,8 +3792,10 @@ elif selections == 'Classification Models':
 
                     LogisticRegression_model_accuracy=accuracy_score(y_test,Predication_by_LogisticRegression_model)
 
-                    LogisticRegression_model_accuracy=np.round(LogisticRegression_model_accuracy,1)*100
 
+                    LogisticRegression_model_accuracy=LogisticRegression_model_accuracy*100
+
+                    LogisticRegression_model_accuracy=round(LogisticRegression_model_accuracy,2)   
 
                     st.subheader(f"Model Accuracy : {LogisticRegression_model_accuracy} %")
 
@@ -3926,8 +3933,9 @@ elif selections == 'Classification Models':
 
                     DecisionTreeClassifier_model_accuracy=accuracy_score(y_test,Predication_by_DecisionTreeClassifier_model)
 
-                    DecisionTreeClassifier_model_accuracy=np.round(DecisionTreeClassifier_model_accuracy,1)*100
+                    DecisionTreeClassifier_model_accuracy=DecisionTreeClassifier_model_accuracy*100
 
+                    DecisionTreeClassifier_model_accuracy=round(DecisionTreeClassifier_model_accuracy,2)   
 
                     st.subheader(f"Model Accuracy : {DecisionTreeClassifier_model_accuracy} %")
 
@@ -4052,7 +4060,13 @@ elif selections == 'Classification Models':
 
                     RandomForestClassifier_model_accuracy=accuracy_score(y_test,Predication_by_RandomForestClassifier_model)
 
-                    RandomForestClassifier_model_accuracy=np.round(RandomForestClassifier_model_accuracy,1)*100
+             
+
+
+
+                    RandomForestClassifier_model_accuracy=RandomForestClassifier_model_accuracy*100
+
+                    RandomForestClassifier_model_accuracy=round(RandomForestClassifier_model_accuracy,2)                
 
 
                     st.subheader(f"Model Accuracy : {RandomForestClassifier_model_accuracy} %")
@@ -4181,8 +4195,10 @@ elif selections == 'Classification Models':
 
                     GradientBoostingClassifier_model_accuracy=accuracy_score(y_test,Predication_by_GradientBoostingClassifier_model)
 
-                    GradientBoostingClassifier_model_accuracy=np.round(GradientBoostingClassifier_model_accuracy,1)*100
 
+                    GradientBoostingClassifier_model_accuracy=GradientBoostingClassifier_model_accuracy*100
+
+                    GradientBoostingClassifier_model_accuracy=round(GradientBoostingClassifier_model_accuracy,2)   
 
                     st.subheader(f"Model Accuracy : {GradientBoostingClassifier_model_accuracy} %")
 
@@ -4281,6 +4297,7 @@ elif selections == 'Classification Models':
                     Overall_Result_0f_Model={
 
                         "Model":["LogisticRegression","DecisionTreeClassifier ","RandomForestClassifier","GradientBoostingClassifier"],
+                        "Model accuracy %":[LogisticRegression_model_accuracy,DecisionTreeClassifier_model_accuracy,RandomForestClassifier_model_accuracy,GradientBoostingClassifier_model_accuracy],
                         "Correct Prediction":[correct_by_LogisticRegression_model,correct_by_DecisionTreeClassifier_model,correct_by_RandomForestClassifier_model,correct_by_GradientBoostingClassifie_model],
                         "Wrong Prediction":[wrong_by_LogisticRegression_model,wrong_by_DecisionTreeClassifier_model,wrong_by_RandomForestClassifier_model,wrong_by_GradientBoostingClassifie_model]
 
@@ -4396,6 +4413,12 @@ elif selections == 'Classification Models':
                         """,
                         unsafe_allow_html=True
                             )
+
+
+
+
+
+
 
 
 
