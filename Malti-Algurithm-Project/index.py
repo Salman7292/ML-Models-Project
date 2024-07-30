@@ -72,6 +72,25 @@ with open("Malti-Algurithm-Project/style.css") as f:
 
 
 
+
+
+# CSS styling for the Streamlit app
+page_bg_img = f"""
+<style>
+
+
+</style>
+"""
+
+# Apply CSS styling to the Streamlit app
+st.markdown(page_bg_img, unsafe_allow_html=True)
+
+
+
+
+
+
+
 flag1=0
 
 
@@ -140,7 +159,58 @@ with st.sidebar:
 
     # Display footer in the app
     st.markdown(footer_html, unsafe_allow_html=True)
+
+ 
+def sum_confusion_matrix(confusion_matrix):
+
+    # Ensure the confusion matrix is a numpy array
+    confusion_matrix = np.array(confusion_matrix)
     
+    # Calculate the sum of all elements
+    total_sum = np.sum(confusion_matrix)
+    
+    return total_sum
+
+def calculate_confusion_matrix_metrics(confusion_matrix):
+ 
+    # Ensure the confusion matrix is a numpy array
+    confusion_matrix = np.array(confusion_matrix)
+    n_classes = confusion_matrix.shape[0]
+
+    # True Positives are the diagonal elements
+    TP = np.diag(confusion_matrix)
+
+    # False Positives are the sum of the corresponding column, excluding the diagonal
+    FP = np.sum(confusion_matrix, axis=0) - TP
+
+    # False Negatives are the sum of the corresponding row, excluding the diagonal
+    FN = np.sum(confusion_matrix, axis=1) - TP
+
+    # True Negatives calculation
+    TN = []
+    for i in range(n_classes):
+        # Create a mask for excluding the ith row and column
+        mask = np.ones_like(confusion_matrix, dtype=bool)
+        mask[i, :] = False  # Exclude the ith row
+        mask[:, i] = False  # Exclude the ith column
+        TN.append(np.sum(confusion_matrix[mask]))
+
+    correct_predictions = np.sum(TP)
+    wrong_predictions = sum_confusion_matrix(confusion_matrix) - correct_predictions
+
+    return {
+        "True Positives": TP.tolist(),
+        "True Negatives": TN,
+        "False Positives": FP.tolist(),
+        "False Negatives": FN.tolist(),
+        "Correct Predictions": int(correct_predictions),
+        "Wrong Predictions": int(wrong_predictions)
+    }
+
+
+
+
+
 
 
 
@@ -3262,12 +3332,20 @@ elif selections == 'Classification Models':
                     cm = confusion_matrix(y_test, Predication_by_LogisticRegression_model)
 
 
+                    Result_c_or_w=calculate_confusion_matrix_metrics(cm)
+                    
+
+                    correct_by_LogisticRegression_model  = Result_c_or_w["Correct Predictions"]
+                    wrong_by_LogisticRegression_model = Result_c_or_w["Wrong Predictions"]
+
+
+
                     # creating_cunfusion_Matrix(cm,"Blues","LogisticRegression")
                     a=cm.tolist()
 
 
-                    correct_by_LogisticRegression_model=(a[0][0])+(a[1][1])
-                    wrong_by_LogisticRegression_model=(a[0][1])+(a[1][0])
+                    # correct_by_LogisticRegression_model=(a[0][0])+(a[1][1])
+                    # wrong_by_LogisticRegression_model=(a[0][1])+(a[1][0])
 
                     # Create the result DataFrame
                     LogisticRegression_model_result = {
@@ -3391,13 +3469,19 @@ elif selections == 'Classification Models':
                     cm_DecisionTreeClassifier_model = confusion_matrix(y_test, Predication_by_DecisionTreeClassifier_model)
         
 
+                    Result_c_or_w=calculate_confusion_matrix_metrics(cm_DecisionTreeClassifier_model)
+                    
+
+                    correct_by_DecisionTreeClassifier_model  = Result_c_or_w["Correct Predictions"]
+                    wrong_by_DecisionTreeClassifier_model = Result_c_or_w["Wrong Predictions"]
+
 
                     # creating_cunfusion_Matrix(cm,"Blues","LogisticRegression")
-                    a=cm_DecisionTreeClassifier_model.tolist()
+                    # a=cm_DecisionTreeClassifier_model.tolist()
 
 
-                    correct_by_DecisionTreeClassifier_model=(a[0][0])+(a[1][1])
-                    wrong_by_DecisionTreeClassifier_model=(a[0][1])+(a[1][0])
+                    # # correct_by_DecisionTreeClassifier_model=(a[0][0])+(a[1][1])
+                    # # wrong_by_DecisionTreeClassifier_model=(a[0][1])+(a[1][0])
 
                     # Create the result DataFrame
                     DecisionTreeClassifier_model_result = {
@@ -3529,12 +3613,18 @@ elif selections == 'Classification Models':
                     cm_RandomForestClassifier_model = confusion_matrix(y_test, Predication_by_RandomForestClassifier_model)
 
 
+                    Result_c_or_w=calculate_confusion_matrix_metrics(cm_RandomForestClassifier_model)
+                    
+
+                    correct_by_RandomForestClassifier_model  = Result_c_or_w["Correct Predictions"]
+                    wrong_by_RandomForestClassifier_model = Result_c_or_w["Wrong Predictions"]
+
                     # creating_cunfusion_Matrix(cm,"Blues","LogisticRegression")
-                    a=cm_RandomForestClassifier_model.tolist()
+                    # a=cm_RandomForestClassifier_model.tolist()
 
 
-                    correct_by_RandomForestClassifier_model=(a[0][0])+(a[1][1])
-                    wrong_by_RandomForestClassifier_model=(a[0][1])+(a[1][0])
+                    # correct_by_RandomForestClassifier_model=(a[0][0])+(a[1][1])
+                    # wrong_by_RandomForestClassifier_model=(a[0][1])+(a[1][0])
 
                     # Create the result DataFrame
                     RandomForestClassifier_model_result = {
@@ -3663,13 +3753,19 @@ elif selections == 'Classification Models':
                     # Create the confusion matrix
                     cm_GradientBoostingClassifie_model = confusion_matrix(y_test, Predication_by_GradientBoostingClassifier_model)
 
+                    Result_c_or_w=calculate_confusion_matrix_metrics(cm_GradientBoostingClassifie_model)
+                    
 
-                    # creating_cunfusion_Matrix(cm,"Blues","LogisticRegression")
-                    a=cm_GradientBoostingClassifie_model.tolist()
+                    correct_by_GradientBoostingClassifie_model  = Result_c_or_w["Correct Predictions"]
+                    wrong_by_GradientBoostingClassifie_model = Result_c_or_w["Wrong Predictions"]
+
+                    # # creating_cunfusion_Matrix(cm,"Blues","LogisticRegression")
+
+                    # a=cm_GradientBoostingClassifie_model.tolist()
 
 
-                    correct_by_GradientBoostingClassifie_model=(a[0][0])+(a[1][1])
-                    wrong_by_GradientBoostingClassifie_model=(a[0][1])+(a[1][0])
+                    # correct_by_GradientBoostingClassifie_model=(a[0][0])+(a[1][1])
+                    # wrong_by_GradientBoostingClassifie_model=(a[0][1])+(a[1][0])
 
                     # Create the result DataFrame
                     GradientBoostingClassifie_model_result = {
@@ -3805,13 +3901,19 @@ elif selections == 'Classification Models':
                     # Create the confusion matrix
                     cm = confusion_matrix(y_test, Predication_by_LogisticRegression_model)
 
+                    Result_c_or_w=calculate_confusion_matrix_metrics(cm)
+                    
 
-                    # creating_cunfusion_Matrix(cm,"Blues","LogisticRegression")
-                    b=cm.tolist()
+                    correct_by_LogisticRegression_model  = Result_c_or_w["Correct Predictions"]
+                    wrong_by_LogisticRegression_model = Result_c_or_w["Wrong Predictions"]
 
 
-                    correct_by_LogisticRegression_model=(b[0][0])+(b[1][1])
-                    wrong_by_LogisticRegression_model=(b[0][1])+(b[1][0])
+                    # # creating_cunfusion_Matrix(cm,"Blues","LogisticRegression")
+                    # b=cm.tolist()
+
+
+                    # correct_by_LogisticRegression_model=(b[0][0])+(b[1][1])
+                    # wrong_by_LogisticRegression_model=(b[0][1])+(b[1][0])
 
                     # Create the result DataFrame
                     LogisticRegression_model_result = {
@@ -3944,13 +4046,18 @@ elif selections == 'Classification Models':
                     # Create the confusion matrix
                     cm_DecisionTreeClassifier_model = confusion_matrix(y_test, Predication_by_DecisionTreeClassifier_model)
 
+                    Result_c_or_w=calculate_confusion_matrix_metrics(cm_DecisionTreeClassifier_model)
+                    
 
-                    # creating_cunfusion_Matrix(cm,"Blues","LogisticRegression")
-                    c=cm_DecisionTreeClassifier_model.tolist()
+                    correct_by_DecisionTreeClassifier_model  = Result_c_or_w["Correct Predictions"]
+                    wrong_by_DecisionTreeClassifier_model = Result_c_or_w["Wrong Predictions"]
+
+                    # # creating_cunfusion_Matrix(cm,"Blues","LogisticRegression")
+                    # c=cm_DecisionTreeClassifier_model.tolist()
 
 
-                    correct_by_DecisionTreeClassifier_model=(c[0][0])+(c[1][1])
-                    wrong_by_DecisionTreeClassifier_model=(c[0][1])+(c[1][0])
+                    # correct_by_DecisionTreeClassifier_model=(c[0][0])+(c[1][1])
+                    # wrong_by_DecisionTreeClassifier_model=(c[0][1])+(c[1][0])
                     
 
                     # Create the result DataFrame
@@ -4079,12 +4186,19 @@ elif selections == 'Classification Models':
                     cm_RandomForestClassifier_model = confusion_matrix(y_test, Predication_by_RandomForestClassifier_model)
 
 
-                    # creating_cunfusion_Matrix(cm,"Blues","LogisticRegression")
-                    d=cm_RandomForestClassifier_model.tolist()
+                    Result_c_or_w=calculate_confusion_matrix_metrics(cm_RandomForestClassifier_model)
+                    
+
+                    correct_by_RandomForestClassifier_model  = Result_c_or_w["Correct Predictions"]
+                    wrong_by_RandomForestClassifier_model = Result_c_or_w["Wrong Predictions"]
 
 
-                    correct_by_RandomForestClassifier_model=(d[0][0])+(d[1][1])
-                    wrong_by_RandomForestClassifier_model=(d[0][1])+(d[1][0])
+                    # # creating_cunfusion_Matrix(cm,"Blues","LogisticRegression")
+                    # d=cm_RandomForestClassifier_model.tolist()
+
+
+                    # correct_by_RandomForestClassifier_model=(d[0][0])+(d[1][1])
+                    # wrong_by_RandomForestClassifier_model=(d[0][1])+(d[1][0])
                     
 
                     # Create the result DataFrame
@@ -4208,13 +4322,19 @@ elif selections == 'Classification Models':
                     # Create the confusion matrix
                     cm_GradientBoostingClassifie_model = confusion_matrix(y_test, Predication_by_GradientBoostingClassifier_model)
 
+                    Result_c_or_w=calculate_confusion_matrix_metrics(cm_GradientBoostingClassifie_model)
+                    
 
-                    # creating_cunfusion_Matrix(cm,"Blues","LogisticRegression")
-                    e=cm_GradientBoostingClassifie_model.tolist()
+                    correct_by_GradientBoostingClassifie_model  = Result_c_or_w["Correct Predictions"]
+                    wrong_by_GradientBoostingClassifie_model = Result_c_or_w["Wrong Predictions"]
 
 
-                    correct_by_GradientBoostingClassifie_model=(e[0][0])+(e[1][1])
-                    wrong_by_GradientBoostingClassifie_model=(e[0][1])+(e[1][0])
+                    # # creating_cunfusion_Matrix(cm,"Blues","LogisticRegression")
+                    # e=cm_GradientBoostingClassifie_model.tolist()
+
+
+                    # correct_by_GradientBoostingClassifie_model=(e[0][0])+(e[1][1])
+                    # wrong_by_GradientBoostingClassifie_model=(e[0][1])+(e[1][0])
                     
 
                     # Create the result DataFrame
