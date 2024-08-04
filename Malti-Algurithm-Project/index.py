@@ -548,7 +548,7 @@ selections = option_menu(
     options=['Home',"Dashboard" ,"DataSet Preprocessing",'Regression Models',"Classification Models"],  # Options for the menu
     icons=['house-fill',"bi-bar-chart", "bi-magic",'bi-graph-up',"bi-calculator"],  # Icons for the options
     menu_icon="cast",  # Optional: Change the menu icon
-    default_index=1,  # Optional: Set the default selected option
+    default_index=0,  # Optional: Set the default selected option
     orientation='horizontal',  # Set the menu orientation to horizontal
     styles={  # Define custom styles for the menu
         "container": {
