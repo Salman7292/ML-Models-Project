@@ -29,7 +29,7 @@ from streamlit_option_menu import option_menu
 
 from sklearn.preprocessing import OrdinalEncoder,LabelEncoder,StandardScaler,MinMaxScaler
 
-
+import plotly.express as px
 
 
 
@@ -71,19 +71,91 @@ with open("Malti-Algurithm-Project/style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 
-
-
+# CSS styling for the Streamlit app
 
 # CSS styling for the Streamlit app
-page_bg_img = f"""
+page_css = f"""
 <style>
+[data-testid="stSidebar"] > div:first-child {{
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+   background-color: rgb(2, 48, 71);
+}}
 
+
+.st-emotion-cache-1h9usn1 {{
+    margin-bottom: 0px;
+    margin-top: 0px;
+    width: 100%;
+    border-style: solid;
+    border-width: 1px;
+    border-color: rgba(49, 51, 63, 0.2);
+
+     border-radius: 0.5rem;
+     box-shadow: 0 5px 8px #6c757d;
+     background: #e3f2fd;
+}}
+
+
+.st-emotion-cache-1vt4y43 {{
+    display: inline-flex;
+    -webkit-box-align: center;
+    align-items: center;
+    -webkit-box-pack: center;
+    justify-content: center;
+    font-weight: 400;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.5rem;
+    min-height: 2.5rem;
+    margin: 0px;
+    line-height: 1.6;
+    color: inherit;
+    width: auto;
+    color: whitesmoke;
+    user-select: none;
+    background-color: #2196F3;
+    border: 1px solid rgba(49, 51, 63, 0.2);
+}}
+
+.st-b9 {{
+    border-width: thin;
+    padding-right: 0px;
+    border-color: rgb(163 168 184 / 74%);
+    background: #e3f2fd;
+}}
+
+.st-emotion-cache-1r6slb0 {{
+    height: 93px;
+    
+    box-shadow: 0 5px 8px #6c757d;
+    background: #20283E;
+    border-radius: 10px;
+}}
+
+.st-emotion-cache-ocqkz7 {{
+    display: flex;
+    flex-wrap: wrap;
+    -webkit-box-flex: 1;
+    flex-grow: 1;
+    -webkit-box-align: stretch;
+    align-items: stretch;
+    margin-top: 15px;
+    gap: 1rem;
+
+}}
+
+.st-emotion-cache-aj5vta {{
+    width: 661.333px;
+    position: relative;
+    padding-top: 8px;
+}}
 
 </style>
 """
+st.markdown(page_css,unsafe_allow_html=True)
 
-# Apply CSS styling to the Streamlit app
-st.markdown(page_bg_img, unsafe_allow_html=True)
+
+
 
 
 
@@ -95,20 +167,42 @@ flag1=0
 
 
 with st.sidebar:
-    st.image("Malti-Algurithm-Project/logo3.png", use_column_width=True)
+   # URL of your logo (correct raw URL from GitHub)
+    logo_url = "https://raw.githubusercontent.com/Salman7292/ML-Models-Project/main/Malti-Algurithm-Project/logo3.png"
+
+    # Embed the logo in the sidebar using HTML
+    st.sidebar.markdown(
+        f"""
+        <style>
+            .sidebar-logo {{
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+                width: 70%; /* Adjust the width as needed */
+            }}
+
+        </style>
+        <img src="{logo_url}" class="sidebar-logo">
+        """,
+        unsafe_allow_html=True
+    )
 
 
     # Adding a custom style with HTML and CSS
     st.markdown("""
         <style>
             .custom-text {
-                font-size: 28px;
+                font-size: 27px;
                 font-weight: bold;
                 text-align: center;
-                color:#ffc107
+                color: #ffc107;
             }
             .custom-text span {
                 color: #04ECF0; /* Color for the word 'Insights' */
+            }
+                
+            .st-emotion-cache-1gwvy71 {
+                padding: 0px 0.5rem 1rem;
             }
         </style>
     """, unsafe_allow_html=True)
@@ -152,13 +246,121 @@ with st.sidebar:
     # Footer content
  # HTML and CSS for the centered footer
     footer_html = """
-    <div style="background-color:#023047; padding:10px; text-align:center;margin-top: 10px;">
-        <p style="font-size:20px; color:#ffffff;">Made with ❤️ by Salman Malik</p>
+
+    <div style="background-color:#023047; padding:44px; text-align:center;margin-top: 10px;">
+        <p style="font-size:17px; color:#ffffff;">Made with ❤️ by Salman Malik</p>
     </div>
     """
 
     # Display footer in the app
     st.markdown(footer_html, unsafe_allow_html=True)
+
+
+
+
+def plot_class_distribution_pie_chart(df, column_name):
+
+    # Calculate percentage of each class
+    class_counts = df[column_name].value_counts(normalize=True) * 100
+    class_percentages = class_counts.reset_index()
+    class_percentages.columns = ['Class', 'Percentage']
+    
+    # Create a pie chart with Plotly Express
+    fig = px.pie(class_percentages, names='Class', values='Percentage', 
+                 title='Class Distribution Percentage')
+    
+
+    
+    # Display the pie chart in Streamlit
+    st.plotly_chart(fig)
+
+
+def plot_class_distribution_bar_chart(df, column_name):
+    # Calculate count of each class
+    class_counts = df[column_name].value_counts()
+    class_counts_df = class_counts.reset_index()
+    class_counts_df.columns = ['Class', 'Count']
+    
+    # Create a bar chart with Plotly Express
+    fig = px.bar(class_counts_df, x='Class', y='Count', 
+                 title='Class Distribution Count', 
+                 labels={'Class': 'Class', 'Count': 'Count'},
+                 color='Count',
+                 text='Count')
+    
+    # Display the bar chart in Streamlit
+    st.plotly_chart(fig)
+
+def plot_categorical_distribution(df, column_name):
+    # Calculate count of each category
+    category_counts = df[column_name].value_counts()
+    category_counts_df = category_counts.reset_index()
+    category_counts_df.columns = [column_name, 'Count']
+    
+    # Create a bar chart with Plotly Express
+    fig = px.bar(category_counts_df, x=column_name, y='Count', 
+                 title=f'{column_name} Distribution',
+                 labels={column_name: column_name, 'Count': 'Count'},
+                 text='Count')
+    
+    # Display the bar chart in Streamlit
+    st.plotly_chart(fig)
+
+
+
+
+# Function to plot graphs for a continuous variable
+def plot_continuous_variable(df, column_name):
+    st.title(f"Analysis for {column_name}")
+
+
+    # Color selection for Histogram
+    st.write("### Histogram")
+    hist_color = st.color_picker("Select color for Histogram", "#1f77b4")
+    hist_fig = px.histogram(df, x=column_name, nbins=30, title=f"Histogram of {column_name}", color_discrete_sequence=[hist_color])
+    st.plotly_chart(hist_fig)
+
+
+    # Color selection for Box Plot
+    st.write("Box Plot")
+    box_color = st.color_picker("Select color for Box Plot", "#ff7f0e")
+    box_fig = px.box(df, y=column_name, title=f"Box Plot of {column_name}", color_discrete_sequence=[box_color])
+    st.plotly_chart(box_fig)
+
+    
+    # Scatter Plot (If there are at least two columns)
+    if len(df.columns) > 1:
+        other_columns = [col for col in df.columns if col != column_name]
+        scatter_column = st.selectbox("Select another column for Scatter Plot", other_columns)
+        st.write("### Scatter Plot")
+        scatter_color = st.color_picker("Select color for Scatter Plot", "#2ca02c")
+        scatter_fig = px.scatter(df, x=column_name, y=scatter_column, title=f"Scatter Plot of {column_name} vs {scatter_column}", color_discrete_sequence=[scatter_color])
+        st.plotly_chart(scatter_fig)
+
+
+# Function to plot pie chart of null values
+def plot_null_values_pie_chart(df):
+
+    null_values = df.isnull().sum()
+    null_percentages = (null_values / len(df)) * 100
+    null_percentages = null_percentages[null_percentages > 0]  # Only keep columns with null values
+    if null_percentages.empty:
+        st.write("No null values in the dataset.")
+    else:
+        pie_fig = px.pie(values=null_percentages, names=null_percentages.index, title='Null Values Percentage')
+        st.plotly_chart(pie_fig)
+
+
+# Function to plot bar chart of null values
+def plot_null_values_bar_chart(df):
+
+    null_values = df.isnull().sum()
+    null_values = null_values[null_values > 0]  # Only keep columns with null values
+    if null_values.empty:
+        st.write("No missing values in the dataset.")
+    else:
+        bar_fig = px.bar(x=null_values.index, y=null_values, title='Missing Values in Each Column', labels={'x': 'Column', 'y': 'Missing Values'})
+        st.plotly_chart(bar_fig)
 
  
 def sum_confusion_matrix(confusion_matrix):
@@ -343,10 +545,10 @@ def creating_cunfusion_Matrix(cm,color,model):
 # Define the option menu for navigation
 selections = option_menu(
     menu_title=None,  # No title for the menu
-    options=['Home', "DataSet Preprocessing",'Regression Models',"Classification Models"],  # Options for the menu
-    icons=['house-fill', "bi-magic",'bi-graph-up',"bi-calculator"],  # Icons for the options
+    options=['Home',"Dashboard" ,"DataSet Preprocessing",'Regression Models',"Classification Models"],  # Options for the menu
+    icons=['house-fill',"bi-bar-chart", "bi-magic",'bi-graph-up',"bi-calculator"],  # Icons for the options
     menu_icon="cast",  # Optional: Change the menu icon
-    default_index=0,  # Optional: Set the default selected option
+    default_index=1,  # Optional: Set the default selected option
     orientation='horizontal',  # Set the menu orientation to horizontal
     styles={  # Define custom styles for the menu
         "container": {
@@ -370,6 +572,8 @@ selections = option_menu(
         "nav-link-selected": {"background-color": "#ffc107","font-size": "12px",},  # Green background for selected option
     }
 )
+
+
 
 # Check the selected option from the menu
 if selections == 'Home':
@@ -4540,6 +4744,127 @@ elif selections == 'Classification Models':
 
 
 
+elif selections=="Dashboard":
+
+    def load_file(file, extension):
+        if extension == 'csv':
+            return pd.read_csv(file)
+        elif extension in ['xlsx']:
+            return pd.read_excel(file)
+        
+        else:
+            raise ValueError("Unsupported file extension")
+
+
+    with st.expander("Loading file..."):
+   
+        file=0
+        # If 'Upload DataSet' is selected, display the title
+        
+        # Input for dataset name
+        dataset_name = st.text_input("Insert Dataset Name", placeholder="DataSet Name")
+
+        # File uploader widget
+        uploaded_file = st.file_uploader("Upload a file", type=["csv","xlsx"])
+
+        # Check if a file has been uploaded
+        if uploaded_file is not None:
+            # Extract the file extension
+            file_extension = uploaded_file.name.split('.')[-1]
+            try:
+                # Read the file into a DataFrame
+                data = load_file(uploaded_file, file_extension)
+                st.success("File uploaded and read successfully!")
+                file=1
+
+        
+            except Exception as e:
+                st.error(f"An error occurred while reading the file: {e}")
+
+
+
+    if file==1:
+        # data=pd.read_csv("D:\AI Works\DashBoard\customer.csv")
+
+        rows=data.shape[0]
+        Features=data.shape[1]
+        
+        # Get the data types of each column
+        data_types = data.dtypes
+
+        # Convert to a set to get unique data types
+        unique_data_types = set(data_types)
+
+        # Get the number of unique data types
+        num_unique_data_types = len(unique_data_types)
+
+
+
+        with st.expander("selcting columns"):
+            column=st.selectbox("Select column",options=data.columns)
+            dtype=data[column].dtypes  
+
+
+
+        # Define the HTML and CSS for centered metrics
+        metric_html = """
+        <div style="text-align: center;">
+            <p style="font-size: 20px; margin: 0; color : white;">{label}</p>
+            <p style="font-size: 32px; margin: 0; font-weight: bold;color : white;">{value}</p>
+        </div>
+        """
+        s=0
+        st.title(f"{dataset_name} DataSet Loaded")
+
+        # Create columns for the metrics
+        row_col, Features_col, data_types_col = st.columns(3)
+
+        # Display metrics with centered numbers
+        with row_col:
+            st.markdown(metric_html.format(label="Number of Rows", value=rows), unsafe_allow_html=True)
+
+        with Features_col:
+            st.markdown(metric_html.format(label="Number of Features", value=Features), unsafe_allow_html=True)
+
+        with data_types_col:
+            st.markdown(metric_html.format(label="Unique Data Types", value=num_unique_data_types), unsafe_allow_html=True)
+        
+
+  
+        null_values_percenatge,null_values_bar=st.columns(2)
+
+        with null_values_percenatge:
+            plot_null_values_pie_chart(data)
+        
+        with null_values_bar:
+            plot_null_values_bar_chart(data)
+        
+
+
+
+        if dtype=="object":
+            
+            st.title(f"Detail of {column}")
+
+        # Create columns for the metrics
+            pie_chart, bar_chart= st.columns(2)
+            with pie_chart:
+                # Call the function with the DataFrame and column name
+                plot_class_distribution_pie_chart(data,column )
+
+            with bar_chart:
+                # Call the function with the DataFrame and column name
+                plot_class_distribution_bar_chart(data,column )
+
+
+        elif dtype=="int64" or dtype=="float64":
+            plot_continuous_variable(data,column)
+
+
+
+
+
+
 
 
 
@@ -4558,4 +4883,6 @@ footer {visibility: hidden;}
 """
 st.markdown(hide_streamlit_style,unsafe_allow_html=True)
 
+
+    
 
