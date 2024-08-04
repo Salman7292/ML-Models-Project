@@ -103,18 +103,41 @@ element.style {
     border-right: solid rgb(8, 179, 236);
 } */
 
-.st-emotion-cache-vdokb0 p {
+/* .st-emotion-cache-vdokb0 p {
     word-break: break-word;
     padding-right: 6px;
 }
 
 
 
+.st-emotion-cache-1jicfl2 {
+    width: 100%;
+    padding: 1rem 1rem 6rem;
+    min-width: auto;
+    max-width: initial;
+} */
+
+.st-emotion-cache-1jicfl2 {
+    width: 100%;
+    padding: 4rem 1rem 6rem;
+    min-width: auto;
+    max-width: initial;
+}
 
 
 
-
-
+/* new
+.st-emotion-cache-12fmjuu {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    height: 3.75rem;
+    background: rgb(255, 255, 255);
+    outline: none;
+    z-index: 999990;
+    display: none;
+} */
 
 
 
