@@ -720,7 +720,7 @@ with st.sidebar:
             try:
                 # Read the CSV file into a DataFrame
                 data = pd.read_csv(uploaded_file)
-                data.drop(columns="Unnamed: 0",inplace=True)
+                
                 file_upload_sucuss=1
   
                 st.success("File uploaded successfully!")
