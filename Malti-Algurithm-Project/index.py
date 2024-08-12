@@ -84,6 +84,11 @@ def find_highly_correlated_columns(df, threshold=0.8):
     return highly_corr_pairs
 
 
+def extract_numerical_columns(df):
+
+    # Select columns with numerical data types
+    numerical_columns = df.select_dtypes(include=['number']).columns.tolist()
+    return numerical_columns
 
 
 # Function to plot graphs for a continuous variable
@@ -131,6 +136,9 @@ def numarical_Features(df, column_name):
 
     Line_Break(100)
 
+    numrical_col=extract_numerical_columns(df)
+    numrical_dataset=df[numrical_col]
+
     # Heatmap for correlation
     st.write("##### Correlation Heatmap")
     # Example usage of the function in your Streamlit app
@@ -139,9 +147,9 @@ def numarical_Features(df, column_name):
                                       ['Viridis', 'Cividis', 'Plasma', 'Inferno', 'Magma', 'Rainbow', 'RdBu'], 
                                       key=f"heatmap_colorscale_{col_name}")
     heatmap_fig = go.Figure(data=go.Heatmap(
-        z=df.corr().values,
-        x=df.corr().columns,
-        y=df.corr().index,
+        z=numrical_dataset.corr().values,
+        x=numrical_dataset.corr().columns,
+        y=numrical_dataset.corr().index,
         colorscale=heatmap_colorscale,
         zmin=-1, zmax=1
     ))
