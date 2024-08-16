@@ -62,7 +62,7 @@ import time
 
 
 st.set_page_config(
-        page_icon="Logo3.png",
+        page_icon="Malti-Algurithm-Project/logo3.png",
         page_title="Data Insights Predictor | app",
         layout="wide"
 
