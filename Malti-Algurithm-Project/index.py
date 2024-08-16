@@ -1,545 +1,104 @@
-# Import necessary libraries
 import streamlit as st
+# Importing the pandas library for data manipulation and analysis
 import pandas as pd
+
+import joblib
+
+
+# Importing the seaborn library for data visualization
+import seaborn as sns
 import numpy as np
-import base64
-import plotly.graph_objects as go
-import plotly.express as px
+
+# Importing the matplotlib library for creating static, animated, and interactive visualizations
+import matplotlib.pyplot as plt
+
+# Importing the train_test_split function from scikit-learn to split the dataset into training and testing sets
+from sklearn.model_selection import train_test_split
+
+# Importing the mean_squared_error function from scikit-learn to evaluate the performance of regression models
+from sklearn.metrics import mean_squared_error
+
+# Importing the LinearRegression class from scikit-learn to implement linear regression models
+from sklearn.linear_model import LinearRegression
+
+# Importing the DecisionTreeRegressor class from scikit-learn to implement decision tree regression models
+from sklearn.tree import DecisionTreeRegressor
+
+# Importing the RandomForestRegressor class from scikit-learn to implement random forest regression models
+from sklearn.ensemble import RandomForestRegressor ,GradientBoostingRegressor 
+
 from streamlit_option_menu import option_menu
+
+
+from sklearn.preprocessing import OrdinalEncoder,LabelEncoder,StandardScaler,MinMaxScaler
+
+import plotly.express as px
+
+
+
+# classification models
+
+from sklearn.linear_model import LogisticRegression
+
+from sklearn.tree import DecisionTreeClassifier
+
+from sklearn.ensemble import RandomForestClassifier
+
+from sklearn.ensemble import GradientBoostingClassifier
+
+
+
+from sklearn.metrics import accuracy_score
+
+
+
+from sklearn.metrics import confusion_matrix
+
+
+
+import time 
 
 
 
 
 st.set_page_config(
-        page_icon="https://www.svgrepo.com/show/390209/bug-insect-code-development.svg",
-        page_title="Code Debugger | app",
+        page_icon="Logo3.png",
+        page_title="Data Insights Predictor | app",
         layout="wide"
 
         
         
             )
 
-
-def heading(heading,color):
-        heading_code=f"""
-
-            <{heading} style='text-align: center;color: {color};'>Uplode DataSet</{heading}>
-
-
-                    """
-        st.markdown(heading_code,unsafe_allow_html=True)
-
-
-
-
-def styled_paragraph(content, color="#37474F", font_size="14px"):
-
-
-    # Define the CSS style block with dynamic values
-    css_style = f"""
-    <style>
-        .custom-paragraph {{
-            color: {color};
-            font-size: {font_size};
-        
-        }}
-    </style>
-    """
-
-    # Insert the CSS into the Streamlit app
-    st.markdown(css_style, unsafe_allow_html=True)
-
-    # Define the HTML content with the custom class
-    html_content = f"""
-    <p class="custom-paragraph">
-        {content}
-    </p>
-    """
-
-    # Display the HTML content in Streamlit
-    st.markdown(html_content, unsafe_allow_html=True)
-
-
-
-
-
-
-
-
-def check_datatype(dataframe,colmun):
-    dtype = dataframe[colmun].dtype
-    return dtype
-
-
-# Function to find highly correlated columns
-def find_highly_correlated_columns(df, threshold=0.8):
-    corr_matrix = df.corr()  # Calculate correlation matrix
-    # Create a boolean matrix of high correlations
-    high_corr = corr_matrix.abs() > threshold
-    # Get pairs of highly correlated columns
-    highly_corr_pairs = [(corr_matrix.columns[i], corr_matrix.columns[j]) 
-                         for i in range(len(corr_matrix.columns)) 
-                         for j in range(i) 
-                         if high_corr.iloc[i, j] and corr_matrix.iloc[i, j] != 1.0]
-    return highly_corr_pairs
-
-
-def extract_numerical_columns(df):
-
-    # Select columns with numerical data types
-    numerical_columns = df.select_dtypes(include=['number']).columns.tolist()
-    return numerical_columns
-
-
-# Function to plot graphs for a continuous variable
-def numarical_Features(df, column_name):
-    
-    col_name=column_name[0]
-
-    st.title(f"Analysis for {col_name}")
-
-    graph1, graph2 = st.columns([2, 1])
-    
-
-    with graph1:
-        # Color selection for Histogram
-        st.write(f"##### Distribuation Of {col_name}")
-        hist_color = st.color_picker("Select color for Histogram", "#1f77b4", key=f"hist_color_{column_name}")
-        hist_fig = px.histogram(df, x=column_name, nbins=30, title=f"Histogram of {col_name}", color_discrete_sequence=[hist_color])
-        st.plotly_chart(hist_fig)
-
-    with graph2:
-        # Color selection for Box Plot
-        st.write(f"##### Outliers in {col_name}")
-        box_color = st.color_picker("Select color for Box Plot", "#ff7f0e", key=f"box_color_{col_name}")
-        box_fig = px.box(df, y=column_name, title=f"Box Plot of {col_name}", color_discrete_sequence=[box_color])
-        st.plotly_chart(box_fig)
-
-    Line_Break(100)
-    # Scatter Plot (If there are at least two columns)
-    if len(df.columns) > 1:
-        other_columns = [col for col in df.columns if col != col_name]
-        scatter_column = st.selectbox("Select another column for Scatter Plot", other_columns, key=f"scatter_column_{col_name}")
-        
-        st.write("##### Finding Relationship")
-        scatter_color = st.color_picker("Select color for Scatter Plot", "#2ca02c", key=f"scatter_color_{col_name}")
-        scatter_fig = px.scatter(df, x=col_name, y=scatter_column, title=f"Scatter Plot of {col_name} vs {scatter_column}", color_discrete_sequence=[scatter_color])
-        scatter_fig.update_layout(
-            width=800,
-            height=600,
-            xaxis_title=col_name,  # Set x-axis title
-            yaxis_title=scatter_column  # Set y-axis title
-        )
-        scatter_fig.update_traces(texttemplate='%{x} <br>%{y}', textposition='top center')
-        st.plotly_chart(scatter_fig)
-  # Heatmap for correlation
-
-    Line_Break(100)
-
-    numrical_col=extract_numerical_columns(df)
-    numrical_dataset=df[numrical_col]
-
-    # Heatmap for correlation
-    st.write("##### Correlation Heatmap")
-    # Example usage of the function in your Streamlit app
-    styled_paragraph("Select color scale for Heatmap")
-    heatmap_colorscale = st.selectbox("", 
-                                      ['Viridis', 'Cividis', 'Plasma', 'Inferno', 'Magma', 'Rainbow', 'RdBu'], 
-                                      key=f"heatmap_colorscale_{col_name}")
-    heatmap_fig = go.Figure(data=go.Heatmap(
-        z=numrical_dataset.corr().values,
-        x=numrical_dataset.corr().columns,
-        y=numrical_dataset.corr().index,
-        colorscale=heatmap_colorscale,
-        zmin=-1, zmax=1
-    ))
-    heatmap_fig.update_layout(
-        title="Correlation Heatmap",
-        xaxis_title='Columns',  # Set x-axis title
-        yaxis_title='Columns',  # Set y-axis title
-        width=800,
-        height=600,
-    )
-    heatmap_fig.update_traces(text=df.corr().values, texttemplate='%{text:.2f}', textfont_size=12)
-    st.plotly_chart(heatmap_fig)
-    
-
-
-
-
-
-
-
-
-
-
-        
-
-
-
-
-def Line_Break(width):
-        line_code=f"""
-
-            <hr style="border: none; height: 2px;width: {width}%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
-
-
-                    """
-        st.markdown(line_code,unsafe_allow_html=True)
-
-def Line_Break_start(width):
-        line_code=f"""
-
-            <hr style="border: none; height: 2px;width: {width}%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
-
-
-                    """
-        st.markdown(line_code,unsafe_allow_html=True)
-
-
-def missing_values_count(data):
-        # Calculate the count of missing values for each column
-        missing_counts = data.isnull().sum()
-        return missing_counts.sum()
-
-def duplicate_Values_count(df):
-    # Identify duplicate rows
-    num_duplicates = df.duplicated(keep=False).sum()
-
-    return num_duplicates
-
-def plot_data_type_distribution(dataframe):
-
-    
-    # Initialize counters for different data types
-    float_count = 0
-    int_count = 0
-    object_count = 0
-
-    # Count columns by data type
-    for col in dataframe.columns:
-        dtype = dataframe[col].dtype
-        if dtype == "float64":
-            float_count += 1
-        elif dtype == "int64":
-            int_count += 1
-        elif dtype == "object":
-            object_count += 1
-
-    # Calculate total number of columns
-    total_columns = len(dataframe.columns)
-
-    # Calculate numerical and categorical feature counts and percentages
-    numerical_count = float_count + int_count
-    numerical_percentage = (numerical_count / total_columns) * 100
-    categorical_percentage = (object_count / total_columns) * 100
-
-    # Data for Pie Chart
-    labels = ['Numerical Features', 'Categorical Features']
-    values = [numerical_percentage, categorical_percentage]
-
-    # Create Pie Chart with custom colors
-    fig = go.Figure(data=[go.Pie(
-        labels=labels, 
-        values=values, 
-        hole=0.4,
-        marker=dict(colors=['#FFA500', '#1E90FF']),  # Custom colors: orange and blue
-        textinfo='label+percent',  # Show labels and percentages on the chart
-        hoverinfo='label+value+percent',  # Show all info on hover
-        textfont=dict(size=16),  # Increase text font size for readability
-    )])
-
-    # Update Layout
-    fig.update_layout(
-        title=dict(
-            text='Distribution of Numerical and Categorical Features',
-            x=0.5,  # Center the title
-            xanchor='center',
-            font=dict(size=22)  # Increase title font size
-        ),
-        annotations=[dict(
-            text='Data Types', 
-            x=0.5, y=0.5, 
-            font_size=18, 
-            showarrow=False
-        )],
-        legend=dict(
-            font=dict(size=14),  # Increase legend font size
-            orientation='h',  # Horizontal legend
-            yanchor='bottom',
-            y=-0.3,
-            xanchor='center',
-            x=0.5
-        ),
-        margin=dict(t=80, b=50, l=50, r=50),  # Adjust margins for spacing
-        width=700,
-        height=500,
- 
-    )
-
-    # Display the chart in Streamlit
-    st.plotly_chart(fig)
-
-
-
-
-def plot_data_type_distribution_barchart(dataframe):
-
-    # Initialize counters
-    float_count = 0
-    int_count = 0
-    object_count = 0
-
-    # Count columns by data type
-    for col in dataframe.columns:
-        dtype = dataframe[col].dtype
-        if dtype == "float64":
-            float_count += 1
-        elif dtype == "int64":
-            int_count += 1
-        elif dtype == "object":
-            object_count += 1
-
-    # Data for Bar Chart
-    labels = ['Float', 'Integer', 'Object']
-    counts = [float_count, int_count, object_count]
-
-    # Create Bar Chart
-    fig = go.Figure(data=[go.Bar(x=labels, y=counts, marker_color=['blue', 'green', 'red'])])
-
-    # Update Layout
-    fig.update_layout(
-        title='Count of Each Data Type',
-        xaxis_title='Data Type',
-        yaxis_title='Count',
-        width=600,
-        height=400
-    )
-
-    # Display the chart in Streamlit
-    st.plotly_chart(fig)
-
-def plot_missing_values_percentage(dataframe):
-    # Calculate the percentage of missing values in each column
-    missing_percentages = dataframe.isnull().mean() * 100
-
-    # Filter out columns with 0% missing values
-    missing_percentages = missing_percentages[missing_percentages > 0]
-
-    # Data for Pie Chart
-    labels = missing_percentages.index
-    values = missing_percentages.values
-
-    # Create Pie Chart
-    fig = go.Figure(data=[go.Pie(
-        labels=labels, 
-        values=values, 
-        hole=0.3,
-        marker=dict(colors=['orange', 'blue', 'red', 'green', 'purple'])  # Customize colors
-    )])
-
-    # Update Layout
-    fig.update_layout(
-        title='Percentage of Missing Values in Each Column',
-        annotations=[dict(text='Missing Data', x=0.5, y=0.5, font_size=10, showarrow=False)],
-        legend={'font': {'size': 14}},  # Legend font size
-        margin=dict(t=50, b=50, l=50, r=50),  # Adjust margins for better spacing
-        width=600,
-        height=400
-    )
-
-    # Display the chart in Streamlit
-    st.plotly_chart(fig)
-
-
-def plot_missing_values_count_barchart(dataframe):
-
-    # Calculate the count of missing values for each column
-    missing_counts = dataframe.isnull().sum()
-
-    # Data for Bar Chart
-    labels = missing_counts.index
-    counts = missing_counts.values
-
-    # Create Bar Chart with different colors for each bar
-    colors = ['blue', 'green', 'red', 'orange', 'purple', 'brown', 'pink', 'gray']
-
-    fig = go.Figure(data=[go.Bar(x=labels, y=counts, marker_color=colors[:len(labels)])])
-
-    # Update Layout
-    fig.update_layout(
-        title='Count of Missing Values in Each Column',
-        xaxis_title='Columns',
-        yaxis_title='Count of Missing Values',
-        xaxis=dict(
-            tickfont=dict(size=14),
-            titlefont=dict(size=16)
-        ),
-        yaxis=dict(
-            tickfont=dict(size=14),
-            titlefont=dict(size=16)
-        )
-            ,
-        width=500,
-        height=600
-
-    )
-
-    # Display the chart in Streamlit
-    st.plotly_chart(fig)
-
-def plot_duplicate_vs_unique_pie_chart(df):
-    # Identify duplicate rows
-    num_duplicates = df.duplicated(keep=False).sum()
-    num_unique = len(df) - num_duplicates
-
-    # Prepare data for pie chart
-    data_summary = pd.DataFrame({
-        'Type': ['Unique Rows', 'Duplicate Rows'],
-        'Count': [num_unique, num_duplicates]
-    })
-
-    # Create a pie chart with Plotly
-    fig = px.pie(
-        data_summary,
-        names='Type',
-        values='Count',
-        title='Percentage of Unique vs Duplicate Rows',
-        color_discrete_sequence=['blue', 'yellow'],
-        hole=0.4  # Donut style
-    )
-
-    # Display the pie chart in Streamlit
-    st.plotly_chart(fig)
-
-
-
-def plot_duplicate_vs_unique_bar_chart(df):
-    # Identify duplicate rows
-    num_duplicates = df.duplicated(keep=False).sum()
-    num_unique = len(df) - num_duplicates
-
-    # Prepare data for bar chart
-    data_summary = pd.DataFrame({
-        'Type': ['Unique Rows', 'Duplicate Rows'],
-        'Count': [num_unique, num_duplicates]
-    })
-
-    # Create a bar chart with Plotly
-    fig = px.bar(
-        data_summary,
-        x='Type',
-        y='Count',
-        title='Count of Unique vs Duplicate Rows',
-        color='Type',
-        color_discrete_sequence=['orange', '#EF553B']
-    )
-
-    # Display the bar chart in Streamlit
-    st.plotly_chart(fig)
-
-
-
-
-
-def plot_class_distribution_pie_chart(df, column_name):
-    # Calculate percentage of each class
-    class_counts = df[column_name].value_counts(normalize=True) * 100
-    class_percentages = class_counts.reset_index()
-    class_percentages.columns = ['Class', 'Percentage']
-    
-    # Define custom colors (you can change these to any colors you like)
-    custom_colors = ['orange', '#4682B4', '#32CD32', '#FFD700', '#8A2BE2']
-
-    # Create a pie chart with Plotly Express
-    fig = px.pie(class_percentages, names='Class', values='Percentage', 
-                 title='Class Distribution Percentage',
-                 color_discrete_sequence=custom_colors)
-    
-    # Display the pie chart in Streamlit
-    st.plotly_chart(fig)
-
-
-
-def plot_class_distribution_bar_chart(df, column_name):
-    # Calculate count of each class
-    class_counts = df[column_name].value_counts()
-    class_counts_df = class_counts.reset_index()
-    class_counts_df.columns = ['Class', 'Count']
-    
-    # Create a bar chart with Plotly Express, assigning different colors to each class
-    fig = px.bar(class_counts_df, x='Class', y='Count', 
-                 title='Class Distribution Count', 
-                 labels={'Class': 'Class', 'Count': 'Count'},
-                 text='Count',
-                 color='Class',  # Color by 'Class'
-                 color_discrete_sequence=px.colors.qualitative.Plotly)  # Use Plotly's color sequence
-    
-    # Display the bar chart in Streamlit
-    st.plotly_chart(fig)
-
-
-
-
-def catgorical_varible(df,column_name):
-        Line_Break(100)
-        st.subheader(f'{column_name} Feature Analysis')
-
-        graph1, graph2 = st.columns([2, 1])
-
-        with graph1:
-            plot_class_distribution_pie_chart(df,column_name)
-
-        with graph2:
-            plot_class_distribution_bar_chart(df, column_name)
-        Line_Break(100)
-
-
-
-
-
-
-
-
-
+with open("style.css") as f:
+    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 
 # CSS styling for the Streamlit app
-page_bg_img = f"""
+
+# CSS styling for the Streamlit app
+page_css = f"""
 <style>
 [data-testid="stSidebar"] > div:first-child {{
     background-repeat: no-repeat;
     background-attachment: fixed;
-    background: rgb(18 18 18 / 0%);
+   background-color: rgb(2, 48, 71);
 }}
 
-.st-emotion-cache-1gv3huu {{
-    position: relative;
-    top: 2px;
-    background-color: #000;
-    z-index: 999991;
-    min-width: 244px;
-    max-width: 550px;
-    transform: none;
-    transition: transform 300ms, min-width 300ms, max-width 300ms;
-}}
 
-.st-emotion-cache-1jicfl2 {{
+.st-emotion-cache-1h9usn1 {{
+    margin-bottom: 0px;
+    margin-top: 0px;
     width: 100%;
-    padding: 4rem 1rem 4rem;
-    min-width: auto;
-    max-width: initial;
+    border-style: solid;
+    border-width: 1px;
+    border-color: rgba(49, 51, 63, 0.2);
 
+     border-radius: 0.5rem;
+     box-shadow: 0 5px 8px #6c757d;
+     background: #e3f2fd;
 }}
 
-
-.st-emotion-cache-4uzi61 {{
-    border: 1px solid rgba(49, 51, 63, 0.2);
-    border-radius: 0.5rem;
-    padding: calc(-1px + 1rem);
-    background: rgb(240 242 246);
-    box-shadow: 0 5px 8px #6c757d;
-}}
 
 .st-emotion-cache-1vt4y43 {{
     display: inline-flex;
@@ -555,97 +114,25 @@ page_bg_img = f"""
     line-height: 1.6;
     color: inherit;
     width: auto;
-    user-select: none;
-    background-color: #ffc107;
-    border: 1px solid rgba(49, 51, 63, 0.2);
-}}
-
-.st-emotion-cache-qcpnpn {{
-    border: 1px solid rgb(163, 168, 184);
-    border-radius: 0.5rem;
-    padding: calc(-1px + 1rem);
-    background-color: rgb(38, 39, 48);
-    MARGIN-TOP: 9PX;
-    box-shadow: 0 5px 8px #6c757d;
-}}
-
-
-.st-emotion-cache-15hul6a {{
-    user-select: none;
-    background-color: #ffc107;
-    border: 1px solid rgba(250, 250, 250, 0.2);
-    
-}}
-
-.st-emotion-cache-1hskohh {{
-    margin: 0px;
-    padding-right: 2.75rem;
-    color: rgb(250, 250, 250);
-    border-radius: 0.5rem;
-    background: #000;
-}}
-
-.st-emotion-cache-12pd2es {{
-    margin: 0px;
-    padding-right: 2.75rem;
-    color: #f0f2f6;
-    border-radius: 0.5rem;
-    background: #000;
-}}
-
-p, ol, ul, dl {{
-    margin: 0px 0px 1rem;
-    padding: 0px;
-    font-size: 1rem;
-    font-weight: 400;
     color: whitesmoke;
-}}
-
-.st-emotion-cache-1v7f65g .e1b2p2ww15 {{
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    background: #212121;
-    color: white;
-}}
-
-.st-emotion-cache-1aehpvj {{
-    color: #f5deb3ab;
-    font-size: 12px;
-    line-height: 1.25;
-}}
-
-.st-emotion-cache-1ny7cjd {{
-    display: inline-flex;
-    -webkit-box-align: center;
-    align-items: center;
-    -webkit-box-pack: center;
-    justify-content: center;
-    font-weight: 400;
-    padding: 0.25rem 0.75rem;
-    border-radius: 0.5rem;
-    min-height: 2.5rem;
-    margin: 0px;
-    line-height: 1.6;
-    color: inherit;
-    width: auto;
     user-select: none;
-    background-color: #FFA000;
+    background-color: #2196F3;
     border: 1px solid rgba(49, 51, 63, 0.2);
 }}
 
-.st-cg {{
-    caret-color: rgb(23 24 27);
- 
-    background: #bdbdbdc4;
-
+.st-b9 {{
+    border-width: thin;
+    padding-right: 0px;
+    border-color: rgb(163 168 184 / 74%);
+    background: #e3f2fd;
 }}
 
-.st-emotion-cache-1jicfl2 {{
-    width: 100%;
-    padding: 2rem 1rem 4rem;
-    min-width: auto;
-    max-width: initial;
+.st-emotion-cache-1r6slb0 {{
+    height: 93px;
+    
+    box-shadow: 0 5px 8px #6c757d;
+    background: #20283E;
+    border-radius: 10px;
 }}
 
 .st-emotion-cache-ocqkz7 {{
@@ -655,104 +142,94 @@ p, ol, ul, dl {{
     flex-grow: 1;
     -webkit-box-align: stretch;
     align-items: stretch;
+    margin-top: 15px;
     gap: 1rem;
-    padding: 20px;
+
 }}
 
-# .st-emotion-cache-ue6h4q {{
-#     font-size: 14px;
-#     color: rgb(49, 51, 63);
-#     display: flex;
-#     visibility: visible;
-#     margin-bottom: 0.25rem;
-#     height: auto;
-#     min-height: 1.5rem;
-#     vertical-align: middle;
-#     flex-direction: row;
-#     -webkit-box-align: center;
-#     align-items: center;
-#     display: none;
-# }}
+.st-emotion-cache-aj5vta {{
+    width: 661.333px;
+    position: relative;
+    padding-top: 8px;
+}}
 
 
+element.style {{
+    width: 655.333px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}}
+
+element.style {{
+    width: 655.333px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}}
 </style>
 """
+st.markdown(page_css,unsafe_allow_html=True)
 
-# Apply CSS styling to the Streamlit app
-st.markdown(page_bg_img, unsafe_allow_html=True)
 
-# Sidebar configuration
+
+
+
+
+
+
+
+
+flag1=0
+
+
 with st.sidebar:
-    # Display logo image
-    st.image("Logo4.png", use_column_width=True)
+   # URL of your logo (correct raw URL from GitHub)
+    logo_url = "https://raw.githubusercontent.com/Salman7292/ML-Models-Project/main/Malti-Algurithm-Project/logo3.png"
 
-    # Adding a custom style with HTML and CSS for sidebar
+    # Embed the logo in the sidebar using HTML
+    st.sidebar.markdown(
+        f"""
+        <style>
+            .sidebar-logo {{
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+                width: 70%; /* Adjust the width as needed */
+            }}
+
+        </style>
+        <img src="{logo_url}" class="sidebar-logo">
+        """,
+        unsafe_allow_html=True
+    )
+
+
+    # Adding a custom style with HTML and CSS
     st.markdown("""
         <style>
             .custom-text {
-                font-size: 20px;
+                font-size: 27px;
                 font-weight: bold;
                 text-align: center;
-                color:#ffc107
+                color: #ffc107;
             }
             .custom-text span {
-                color: #04ECF0; /* Color for the word 'Recommendation' */
+                color: #04ECF0; /* Color for the word 'Insights' */
+            }
+                
+            .st-emotion-cache-1gwvy71 {
+                padding: 0px 0.5rem 1rem;
             }
         </style>
     """, unsafe_allow_html=True)
-    
- 
-    # Displaying the subheader with custom styling
-    st.markdown('<p class="custom-text"><span>DashBoard</span> Pro</p>', unsafe_allow_html=True)
 
-    heading("h3","White")
-    Line_Break(100)
-
-    file_upload_sucuss=0
-    # Expander for file upload
-    with st.expander("Insert your Data Here"):
-        # DataSet_name=st.text_input(placeholder="DataSet Name",label="Insert Dataset Name")
-        # File uploader widget
-        uploaded_file = st.file_uploader(label="Upload CSV file", type=["csv"])
-
-        # Check if a file has been uploaded
-        if uploaded_file is not None:
-            try:
-                # Read the CSV file into a DataFrame
-                data = pd.read_csv(uploaded_file)
-                
-                file_upload_sucuss=1
-  
-                st.success("File uploaded successfully!")
-                
-                file_upload_sucuss=1
-
-
-                
-
-
-            except Exception as e:
-                st.error(f"An error occurred while reading the file: {e}")
-        else:
-            st.info("Please upload a CSV file to proceed.")
-
-
-        if file_upload_sucuss==1:
-
-            # Multi-select widget for column selection
-            selected_columns = st.multiselect(
-                        label="Select Columns for Analysis",
-                        options=data.columns
-                    
-                    )
-            
+    # Displaying the subheader with the custom class
+    st.markdown('<p class="custom-text">Data <span>Insights</span> Predictor</p>', unsafe_allow_html=True)
 
 
 
-
-
-
-    # HTML and CSS for the GitHub button
+    # HTML and CSS for the button
     github_button_html = """
     <div style="text-align: center; margin-top: 50px;">
         <a class="button" href="https://github.com/Salman7292" target="_blank" rel="noopener noreferrer">Visit my GitHub</a>
@@ -779,279 +256,2214 @@ with st.sidebar:
     </style>
     """
 
-    # Display the GitHub button in the sidebar
+    # Display the GitHub button in the app
     st.markdown(github_button_html, unsafe_allow_html=True)
     
-    # Footer HTML and CSS
+    # Footer
+    # Footer content
+ # HTML and CSS for the centered footer
     footer_html = """
-    <div style="padding:10px; text-align:center;margin-top: 10px;">
-        <p style="font-size:20px; color:#ffffff;">Made with ❤️ by Salman Malik</p>
+
+    <div style="background-color:#023047; padding:44px; text-align:center;margin-top: 10px;">
+        <p style="font-size:17px; color:#ffffff;">Made with ❤️ by Salman Malik</p>
     </div>
     """
 
-    # Display footer in the sidebar
+    # Display footer in the app
     st.markdown(footer_html, unsafe_allow_html=True)
 
+ # Save model
+
+
+def downlod_model(Model_name):
+            # Provide download link
+    with open(Model_name, "rb") as f:
+            st.download_button(
+                label="Download trained model",
+                data=f,
+                file_name=Model_name,
+                mime="application/octet-stream"
+                    )
 
 
 
-def Main_PAGE(data):
-                    # Display the DataFrame
-    st.title('Data Analytics Dashboard')
+def plot_class_distribution_pie_chart(df, column_name):
+
+    # Calculate percentage of each class
+    class_counts = df[column_name].value_counts(normalize=True) * 100
+    class_percentages = class_counts.reset_index()
+    class_percentages.columns = ['Class', 'Percentage']
     
-    # st.dataframe(data)
-
-    rows=data.shape[0]
-    Features=data.shape[1]
-        
-    # Get the data types of each column
-    data_types = data.dtypes
-
-    # Convert to a set to get unique data types
-    unique_data_types = set(data_types)
-
-    null_values = data.isnull().sum()
-    null_values=null_values.sum()
-
-
-    # Get the number of unique data types
-    num_unique_data_types = len(unique_data_types)
-
-
-
-
-    # Inject custom CSS
-    st.markdown(
-        """
-        <style>
-        /* Change the background color of the tab container */
-        div[data-baseweb="tab-list"] {
-            background-color: #00BCD4;
-            padding: 5px;
-            border-radius: 20px;
-        }
-
-        /* Change the color of the selected tab */
-        div[data-baseweb="tab-list"] button[aria-selected="true"] {
-        background-color: #0008ff;
-        color: white;
-        border-radius: 20px;
-        padding: 10px;
-        border: none;
-        }
-
-
-        /* Change the color of non-selected tabs */
-        div[data-baseweb="tab-list"] button {
-            # background-color: #ffd54fdb;
-            # color: black;
-            border-radius: 10px;
-            padding: 10px;
-            border: none;
-            margin: 0 5px;
-            color: #fff;
-            background-color: #007bff;
-            border-color: #007bff;
-        }
-
-        /* Change the hover color of non-selected tabs */
-        div[data-baseweb="tab-list"] button:hover {
-            background-color: #ffcc00;
-            color: white;
-        }
-
-
-
-
-
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-
-
-
-    if missing_values_count(data)  > 1 and duplicate_Values_count(data) >1:
-        Line_Break(100)
-
-        tab1, tab2,tab3 = st.tabs(["DataTypes Analysis", "Missing Values Analysis","Duplicate Values Analysis"])
-        
-        
-        
-        with tab1:
-            Line_Break(100)
-            
-            st.subheader('DataTypes Analysis')
-            graph1, graph2 = st.columns([2, 1])
-
-            with graph1:
-                plot_data_type_distribution(data)
-
-            with graph2:
-                plot_data_type_distribution_barchart(data)
-
-        Line_Break(100)
-
-        with tab2:
-            Line_Break(100)
-            
-            st.subheader('Missing Values Analysis')
-            graph3, graph4 = st.columns([2, 1])
-
-            with graph3:
-                plot_missing_values_percentage(data)
-
-            with graph4:
-                plot_missing_values_count_barchart(data)
-
-        with tab3:
-            Line_Break(100)
-            
-            st.subheader('Duplicate Values Analysis')
-            graph3, graph4 = st.columns([2, 1])
-
-            with graph3:
-                plot_duplicate_vs_unique_pie_chart(data)
-
-            with graph4:
-                plot_duplicate_vs_unique_bar_chart(data)
-
-        # Function to create boxplots
-        def create_boxplots(data, columns):
-            st.write("Here you can display a boxplot or any other analysis for", columns[0])
-            # Example plot (you can replace this with actual boxplot code)
-            st.line_chart(data[columns[0]])
-
-
-
-        # Create dynamic tabs based on selected columns
-        if selected_columns:
-            tabs = st.tabs(selected_columns)
-            for tab, column in zip(tabs, selected_columns):
-                with tab:
-
-                    
-
-
-                    colmuns_datatype=check_datatype(data,column)
-
-
-
-                    if colmuns_datatype =="object":
-                        catgorical_varible(data,column)
-
-
-                    elif colmuns_datatype =="float64" or colmuns_datatype =="int64":
-
-                        numarical_Features(data,[column])
-                    
-
-
-
-
-
-    elif  missing_values_count(data)  > 1:
-        Line_Break(100)
-        tab1, tab2 = st.tabs(["DataTypes Analysis", "Missing Values Analysis"])
-
-        with tab1:
-            Line_Break(100)
-            st.subheader('DataTypes Analysis')
-            graph1, graph2 = st.columns([2, 1])
-
-            with graph1:
-                plot_data_type_distribution(data)
-
-            with graph2:
-                plot_data_type_distribution_barchart(data)
-
-        Line_Break(100)
-
-        with tab2:
-            Line_Break(100)
-            
-            st.subheader('Missing Values Analysis')
-            graph3, graph4 = st.columns([2, 1])
-
-            with graph3:
-                plot_missing_values_percentage(data)
-
-            with graph4:
-                plot_missing_values_count_barchart(data)
-
-        # Function to create boxplots
-        def create_boxplots(data, columns):
-            st.write("Here you can display a boxplot or any other analysis for", columns[0])
-            # Example plot (you can replace this with actual boxplot code)
-            st.line_chart(data[columns[0]])
-
-
-
-        # Create dynamic tabs based on selected columns
-        if selected_columns:
-            tabs = st.tabs(selected_columns)
-            for tab, column in zip(tabs, selected_columns):
-
-                with tab:
-                    colmuns_datatype=check_datatype(data,column)
-                    if colmuns_datatype =="object":
-                        catgorical_varible(data,column)
-
-
-                    elif colmuns_datatype =="float64" or colmuns_datatype =="int64":
-
-                        numarical_Features(data,[column])
-        Line_Break(100)
-
-
-
-
+    # Create a pie chart with Plotly Express
+    fig = px.pie(class_percentages, names='Class', values='Percentage', 
+                 title='Class Distribution Percentage')
+    
+
+    
+    # Display the pie chart in Streamlit
+    st.plotly_chart(fig)
+
+
+def plot_class_distribution_bar_chart(df, column_name):
+    # Calculate count of each class
+    class_counts = df[column_name].value_counts()
+    class_counts_df = class_counts.reset_index()
+    class_counts_df.columns = ['Class', 'Count']
+    
+    # Create a bar chart with Plotly Express
+    fig = px.bar(class_counts_df, x='Class', y='Count', 
+                 title='Class Distribution Count', 
+                 labels={'Class': 'Class', 'Count': 'Count'},
+                 color='Count',
+                 text='Count')
+    
+    # Display the bar chart in Streamlit
+    st.plotly_chart(fig)
+
+def plot_categorical_distribution(df, column_name):
+    # Calculate count of each category
+    category_counts = df[column_name].value_counts()
+    category_counts_df = category_counts.reset_index()
+    category_counts_df.columns = [column_name, 'Count']
+    
+    # Create a bar chart with Plotly Express
+    fig = px.bar(category_counts_df, x=column_name, y='Count', 
+                 title=f'{column_name} Distribution',
+                 labels={column_name: column_name, 'Count': 'Count'},
+                 text='Count')
+    
+    # Display the bar chart in Streamlit
+    st.plotly_chart(fig)
+
+
+
+
+# Function to plot graphs for a continuous variable
+def plot_continuous_variable(df, column_name):
+    st.title(f"Analysis for {column_name}")
+
+
+    # Color selection for Histogram
+    st.write("### Histogram")
+    hist_color = st.color_picker("Select color for Histogram", "#1f77b4")
+    hist_fig = px.histogram(df, x=column_name, nbins=30, title=f"Histogram of {column_name}", color_discrete_sequence=[hist_color])
+    st.plotly_chart(hist_fig)
+
+
+    # Color selection for Box Plot
+    st.write("Box Plot")
+    box_color = st.color_picker("Select color for Box Plot", "#ff7f0e")
+    box_fig = px.box(df, y=column_name, title=f"Box Plot of {column_name}", color_discrete_sequence=[box_color])
+    st.plotly_chart(box_fig)
+
+    
+    # Scatter Plot (If there are at least two columns)
+    if len(df.columns) > 1:
+        other_columns = [col for col in df.columns if col != column_name]
+        scatter_column = st.selectbox("Select another column for Scatter Plot", other_columns)
+        st.write("### Scatter Plot")
+        scatter_color = st.color_picker("Select color for Scatter Plot", "#2ca02c")
+        scatter_fig = px.scatter(df, x=column_name, y=scatter_column, title=f"Scatter Plot of {column_name} vs {scatter_column}", color_discrete_sequence=[scatter_color])
+        st.plotly_chart(scatter_fig)
+
+
+# Function to plot pie chart of null values
+def plot_null_values_pie_chart(df):
+
+    null_values = df.isnull().sum()
+    null_percentages = (null_values / len(df)) * 100
+    null_percentages = null_percentages[null_percentages > 0]  # Only keep columns with null values
+    if null_percentages.empty:
+        st.write("No null values in the dataset.")
     else:
-        Line_Break(100)
-        # Create a single tab
-        tab1 = st.tabs(["DataTypes Analysis"])[0]  # Access the first tab
+        pie_fig = px.pie(values=null_percentages, names=null_percentages.index, title='Null Values Percentage')
+        st.plotly_chart(pie_fig)
+
+
+# Function to plot bar chart of null values
+def plot_null_values_bar_chart(df):
+
+    null_values = df.isnull().sum()
+    null_values = null_values[null_values > 0]  # Only keep columns with null values
+    if null_values.empty:
+        st.write("No missing values in the dataset.")
+    else:
+        bar_fig = px.bar(x=null_values.index, y=null_values, title='Missing Values in Each Column', labels={'x': 'Column', 'y': 'Missing Values'})
+        st.plotly_chart(bar_fig)
+
+ 
+def sum_confusion_matrix(confusion_matrix):
+
+    # Ensure the confusion matrix is a numpy array
+    confusion_matrix = np.array(confusion_matrix)
+    
+    # Calculate the sum of all elements
+    total_sum = np.sum(confusion_matrix)
+    
+    return total_sum
+
+def calculate_confusion_matrix_metrics(confusion_matrix):
+ 
+    # Ensure the confusion matrix is a numpy array
+    confusion_matrix = np.array(confusion_matrix)
+    n_classes = confusion_matrix.shape[0]
+
+    # True Positives are the diagonal elements
+    TP = np.diag(confusion_matrix)
+
+    # False Positives are the sum of the corresponding column, excluding the diagonal
+    FP = np.sum(confusion_matrix, axis=0) - TP
+
+    # False Negatives are the sum of the corresponding row, excluding the diagonal
+    FN = np.sum(confusion_matrix, axis=1) - TP
+
+    # True Negatives calculation
+    TN = []
+    for i in range(n_classes):
+        # Create a mask for excluding the ith row and column
+        mask = np.ones_like(confusion_matrix, dtype=bool)
+        mask[i, :] = False  # Exclude the ith row
+        mask[:, i] = False  # Exclude the ith column
+        TN.append(np.sum(confusion_matrix[mask]))
+
+    correct_predictions = np.sum(TP)
+    wrong_predictions = sum_confusion_matrix(confusion_matrix) - correct_predictions
+
+    return {
+        "True Positives": TP.tolist(),
+        "True Negatives": TN,
+        "False Positives": FP.tolist(),
+        "False Negatives": FN.tolist(),
+        "Correct Predictions": int(correct_predictions),
+        "Wrong Predictions": int(wrong_predictions)
+    }
+
+
+
+
+
+
+
+
+# Function to plot model results
+def plot_results(model_name, y_test, predictions):
+    plt.figure(figsize=(10, 6))
+    plt.plot(y_test.values, label='Actual Values')
+    plt.plot(predictions, label='Predicted Values', alpha=0.7)
+    plt.title(f'{model_name} Predictions')
+    plt.xlabel('Sample Index')
+    plt.ylabel('Target Value')
+    plt.legend()
+    plt.grid(True)
+    st.pyplot(plt)
+
+
+
+# Function to plot bar plots of model evaluation
+def plot_bar(model_name, mse, rmse,color1):
+    evaluation_df = pd.DataFrame({
+        "Metric": ["Mean Squared Error", "Root Mean Squared Error"],
+        "Value": [mse, rmse]
+    })
+    plt.figure(figsize=(10, 6))
+    sns.barplot(x="Metric", y="Value", data=evaluation_df,color=color1)
+    plt.title(f'{model_name} Model Evaluation')
+    plt.xlabel('Metric')
+    plt.ylabel('Value')
+
+    st.pyplot(plt)
+
+
+
+
+
+# Function to plot combined comparison of all models
+def plot_combined_comparison(all_results_df):
+    fig, ax1 = plt.subplots(figsize=(14, 8))
+
+    sns.barplot(x="Models", y="RMS/Error", data=all_results_df, palette="tab10", ax=ax1, label='RMS Error')
+    ax1.set_ylabel('RMS Error')
+    ax1.set_title('Comparison of All Models - RMS and MSE Error')
+    
+    ax2 = ax1.twinx()
+    sns.barplot(x="Models", y="MSE/Error", data=all_results_df, palette="tab10", ax=ax2, label='MSE Error')
+    ax2.set_ylabel('MSE Error')
+
+    fig.tight_layout()
+    ax1.legend(loc='upper left')
+    ax2.legend(loc='upper right')
+
+    st.pyplot(fig)
+
+# funcation to draw boxplot for outliers
+
+def create_boxplots(dataframe, columns):
+    melted_df = dataframe.melt(value_vars=columns, var_name='Variable', value_name='Value')
+    plt.figure(figsize=(10, 6))
+    sns.boxplot(x='Variable', y='Value', data=melted_df, palette='Set1')
+    # plt.title('Boxplots of Selected Columns', fontsize=14)  # Adjust title font size
+    plt.xlabel('Features', fontsize=12)  # Adjust x-axis label font size
+    plt.ylabel('Values', fontsize=12)  # Adjust y-axis label font size
+    plt.xticks(fontsize=6)  # Adjust x-axis tick labels font size
+    plt.yticks(fontsize=10)  # Adjust y-axis tick labels font size
+    # plt.grid(True)
+    st.pyplot(plt)
+
+
+
+# outlier Removal from the dataset using percentile
+
+def Outliers_Removal(data, columns):
+    indexlist = set()
+    for column in columns:
+        q1 = data[column].quantile(0.25)  # 1st quartile (25th percentile)
+        q2 = data[column].quantile(0.50)  # Median (50th percentile)
+        q3 = data[column].quantile(0.75)  # 3rd quartile (75th percentile)
+        iqr = q3 - q1
+        lower_bound = q1 - 1.5 * iqr  # Lower outlier bound
+        upper_bound = q3 + 1.5 * iqr  # Upper outlier bound
+
+        # Identify outliers
+        Outliers_OF_column = data[column].loc[(data[column] < lower_bound) | (data[column] > upper_bound)]
+        
+        # Add the indices of outliers to the set
+        indexlist.update(Outliers_OF_column.index)
+
+    # Drop rows with outliers from the DataFrame
+    final_DataSet = data.drop(indexlist)
+    
+    return final_DataSet
+
+
+# Function to get user-defined order for unique values in each column
+def get_ordered_unique_values(df,column_list):
+
+    ordered_values = {}
+
+    for column in column_list:
+        unique_values = df[column].unique().tolist()
+        options = st.multiselect(
+            label=f'Select and order the categories for {column} Feature',
+            options=unique_values,
+            default=None
+        )
+
+        # Reverse the order for demonstration purposes (remove if not needed)
+        options = list(reversed(options))
+
+        ordered_values[column] = options
+
+    return ordered_values
+
+
+
+def creating_cunfusion_Matrix(cm,color,model):
+    # Use matplotlib to plot the confusion matrix
+    fig, ax = plt.subplots(figsize=(7, 3))
+    sns.heatmap(cm, annot=True, fmt='d', cmap=color, ax=ax)
+    plt.xlabel('Predicted',fontsize=8)
+    plt.ylabel('Actual',fontsize=8)
+    plt.title(F'Confusion Matrix for {model}',fontsize=8)
+
+    # Display the plot in the Streamlit app
+    st.pyplot(fig)   
+
+
+
+
+# Define the option menu for navigation
+selections = option_menu(
+    menu_title=None,  # No title for the menu
+    options=['Home',"Dashboard" ,"DataSet Preprocessing",'Regression Models',"Classification Models"],  # Options for the menu
+    icons=['house-fill',"bi-bar-chart", "bi-magic",'bi-graph-up',"bi-calculator"],  # Icons for the options
+    menu_icon="cast",  # Optional: Change the menu icon
+    default_index=1,  # Optional: Set the default selected option
+    orientation='horizontal',  # Set the menu orientation to horizontal
+    styles={  # Define custom styles for the menu
+        "container": {
+            "padding": "5px 23px",
+            "background-color": "#0d6efd",  # Background color (dark grey)
+            "border-radius": "8px",
+            "box-shadow": "0px 4px 10px rgba(0, 0, 0, 0.25)"
+        },
+        "icon": {"color": "#f9fafb", "font-size": "18px"},  # Style for the icons (light grey)
+        "hr": {"color": "#0d6dfdbe"},  # Style for the horizontal line (very light grey)
+        "nav-link": {
+            "color": "#f9fafb",  # Light grey text color
+            "font-size": "12px",
+            "text-align": "center",
+            "margin": "0 10px",  # Adds space between the buttons
+            "--hover-color": "#0761e97e",  # Slightly lighter grey for hover
+            "padding": "10px 10px",
+            "border-radius": "16px"
+
+        },
+        "nav-link-selected": {"background-color": "#ffc107","font-size": "12px",},  # Green background for selected option
+    }
+)
+
+
+
+# Check the selected option from the menu
+if selections == 'Home':
+    
+    # If 'Home' is selected, include Bootstrap CSS and JS
+    st.markdown("""
+        <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    """, unsafe_allow_html=True)
+
+    # Define HTML and CSS for the hero section
+    code = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Streamlit App Description</title>
+    <style>
+        .hero-section {
+        background-color: #ffffff /* Set your background color */
+        padding: 80px 20px; /* Adjust padding as needed */
+        text-align: center;
+        font-family: Arial, sans-serif;
+        }
+        .hero-heading {
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+        color: #333; /* Set your text color */
+        font-family: 'Roboto', sans-serif; /* Use Roboto font specifically for heading */
+        font-weight: 700; /* Use Roboto's bold variant */
+        }
+        .hero-text {
+        font-size: 1.2rem;
+        line-height: 1.6;
+        color: #666; /* Set your text color */
+        max-width: 900px;
+        margin: 0 auto;
+        }
+ 
+        
+    </style>
+    </head>
+    <body>
+
+    <section class="hero-section">
+    <div class="container">
+        <h1 class="hero-heading">Empower Your Data <span>Insights with Predictive</span> Analytics</h1>
+        <p class="hero-text">
+        Unlock the power of data-driven decision-making with our intuitive Streamlit app. Upload your Regession Type dataset effortlessly, and watch as our app automatically analyzes attributes, applies sophisticated train-test splitting, and enables you to select from a range of powerful regression models. Whether you're forecasting trends, optimizing strategies, or making informed decisions, our app simplifies the complex, making predictive analytics accessible and actionable. Transform your data into insights today with our user-friendly, interactive tool.
+        </p>
+    </div>
+    </section>
+
+    </body>
+    </html>
+    """
+    # Display the hero section using markdown
+    st.markdown(code, unsafe_allow_html=True)
+
+
+
+
+
+
+elif selections == 'Regression Models':
+    st.markdown(
+                                    """
+                                    <h1 style='text-align: center;color:orange'>Wellcome to Regression Models</h1>
+                                    """,
+                                    unsafe_allow_html=True
+                                    ) 
+
+    st.markdown(
+                            """
+                            <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                            """,
+                            unsafe_allow_html=True
+                        )     
+
+
+    # If 'Upload DataSet' is selected, display the title
+    
+    # submation_file=st.form("Uploding the file")
+    DataSet_name=st.text_input(placeholder="DataSet Name",label="Insert Dataset Name")
+
+    input=st.expander("Insert your Data Here")
+    # File uploader widget
+    uploaded_file = st.file_uploader(label="Upload CSV file", type=["csv"])
+
+    # Check if a file has been uploaded
+    if uploaded_file is not None:
+        try:
+            # Read the CSV file into a DataFrame
+            data = pd.read_csv(uploaded_file)
+            data=data.dropna()
+            st.success("File uploaded successfully!")
+            # Display the DataFrame
+
+            st.title(f"{DataSet_name} DataSet Loaded")
+            st.write(f"Shape {data.shape}")
+            st.dataframe(data)
+            columns_list=data.columns
+            columns_list2=list()
+            for column in columns_list:
+                columns_list2.append(column)
+
+
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); box-shadow: 10px 4px 8px rgba(3, 225, 129, 0.2);" />
+                """,
+                unsafe_allow_html=True
+            )               
+                
+
+            st.markdown(
+            """
+            <h1 style='text-align: center;'>Select The columns as Final Dataset</h1>
+            """,
+            unsafe_allow_html=True
+            ) 
+
+            option=st.multiselect(
+                    label='Remove The unnecessary  Features',
+                    options=columns_list2,
+                    default=columns_list2
+                )
+                
+            final_DataSet=data[option]
+            st.subheader("Final DataSet")
+            st.dataframe(final_DataSet)
+
+
+
+
+
+            spliting_data=final_DataSet.columns
+
+            columns_list3=list()
+
+            for column in spliting_data:
+                columns_list3.append(column)
+
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); box-shadow: 10px 4px 8px rgba(3, 225, 129, 0.2);" />
+                """,
+                unsafe_allow_html=True
+            )
+
+
+         
+            st.markdown(
+            """
+            <h1 style='text-align: center;'>Defining input and Traget Features</h1>
+            """,
+            unsafe_allow_html=True
+            ) 
+
+
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(to right, #ff7e5f, #feb47b);" />
+                """,
+                unsafe_allow_html=True
+            )
+
+
+            col1,col2=st.columns([1,1])
+
+            with col1:
+                st.subheader("Input Features")
+                option2=st.multiselect(
+                    label='select The Input Features',
+                    options=columns_list3,
+                    default=columns_list3
+                )
+                
+                Input_Features=data[option2]
+                
+                st.dataframe(Input_Features)
+
+
+            # Insert a vertical line between the two columns using HTML/CSS
+                st.markdown(
+                    """
+                    <style>
+                    .vertical-line {
+                        border-left: 2px solid #3498db;
+                        height: 100%;
+                        position: absolute;
+                        left: 50%;
+                        transform: translateX(-50%);
+                    }
+                    </style>
+                    <div class="vertical-line"></div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+
+            with col2:
+                st.subheader("Target features")
+                option3=st.multiselect(
+                    label='select The Target Features',
+                    options=columns_list3,
+                    default=columns_list3
+                )
+                
+                Target_Features=data[option3]
+                
+                st.dataframe(Target_Features)
+            # Horizontal line with gradient color
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); box-shadow: 10px 4px 8px rgba(3, 225, 129, 0.2);" />
+                """,
+                unsafe_allow_html=True
+            )
+          
+            st.markdown(
+            """
+            <h1 style='text-align: center;'>Applying Train Test spliting</h1>
+            """,
+            unsafe_allow_html=True
+            )  
+
+
+
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(to right, #ff7e5f, #feb47b);" />
+                """,
+                unsafe_allow_html=True
+            )
+
+
+
+
+            x_train,x_test,y_train,y_test=train_test_split(Input_Features,Target_Features,test_size=.20,random_state=101)
+           
+
+            st.markdown(
+            """
+            <h3 style='text-align: center;'> Data Which Were Used In a Training Of Model</h3>
+            """,
+            unsafe_allow_html=True
+            )
+
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+
+
+            col3,col4=st.columns(2)
+            with col3:
+                st.subheader("X Train Data")
+                st.write(f"Shape {x_train.shape}")
+                st.dataframe(x_train)
+
+            with col4:
+                st.subheader("Y Train Data")
+                st.write(f"Shape {y_train.shape}")
+                st.dataframe(y_train)
+
+
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+            )
+            st.markdown(
+            """
+            <h3 style='text-align: center;'> Data Which Were Used In a Testing Of Model</h3>
+            """,
+            unsafe_allow_html=True
+            )
+
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+
+
+            col5,col6=st.columns(2)
+            with col5:
+                st.subheader("X Testing Data")
+                st.write(f"Shape {x_test.shape}")
+                st.dataframe(x_test)
+
+            with col6:
+                st.subheader("Y Testing Data")
+                st.write(f"Shape {y_test.shape}")
+                st.dataframe(y_test)
+
+           
         
 
-        with tab1:
-            Line_Break(100)
-            st.subheader('DataTypes Analysis')
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+            )
+            st.markdown(
+            """
+            <h1 style='text-align: center;'>Select a Models Which You Want To Train</h1>
+            """,
+            unsafe_allow_html=True
+            )
+
+
+
+            Model_list=["RandomForestRegressor","GradientBoostingRegressor","DecisionTreeRegressor","LinearRegression","All"]
+
+
             
-            graph1, graph2 = st.columns([2, 1])
+            option4 = st.radio(
+                label="Select a Model",
+                options=["RandomForestRegressor Model","GradientBoostingRegressor Model","DecisionTreeRegressor Model","LinearRegression Model","All Models"],
+                index=None,  # Setting the default selected index to 1 (Banana)
+        
+            )
 
-            with graph1:
-                plot_data_type_distribution(data)
+            # with st.spinner("Traning A Model"):
+            #     time.sleep(10)
 
-            with graph2:
-                plot_data_type_distribution_barchart(data)
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+            )
+            
+            
+            st.markdown(
+            """
+            <h1 style='text-align: center;'>Model Detail</h1>
+            """,
+            unsafe_allow_html=True
+            )
 
-        Line_Break(100)
-        # Function to create boxplots
-        def create_boxplots(data, columns):
-            st.write("Here you can display a boxplot or any other analysis for", columns[0])
-            # Example plot (you can replace this with actual boxplot code)
-            st.line_chart(data[columns[0]])
-            Line_Break(100)
-
-
-
-        # Create dynamic tabs based on selected columns
-        if selected_columns:
-            tabs = st.tabs(selected_columns)
-            for tab, column in zip(tabs, selected_columns):
-                with tab:
-                    Line_Break(100)
-
-                    colmuns_datatype=check_datatype(data,column)
-
-                    if colmuns_datatype =="object":
-                        catgorical_varible(data,column)
+            if option4=='RandomForestRegressor Model':
 
 
-                    elif colmuns_datatype =="float64" or colmuns_datatype =="int64":
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+                    )
+                    
+                st.markdown(
+                """
+                <h3 style='text-align: center;'>RandomForestRegressor Model Predictions</h3>
+                """,
+                unsafe_allow_html=True
+                )
 
-                        numarical_Features(data,[column])
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+
+
+
+                RandomForestRegressor_Model=RandomForestRegressor()
+
+                RandomForestRegressor_Model.fit(x_train,y_train)
+
+                model_file_name="RandomForestRegressor.pkl"
+
+
+                joblib.dump(RandomForestRegressor_Model, model_file_name)
+
+                Result1=RandomForestRegressor_Model.predict(x_test)
+       
+                
+                RandomForestRegressor_Model_Predictions=pd.DataFrame(Result1)
+                RandomForestRegressor_Model_Predictions.rename(columns={0:"Predicted Values"},inplace=True)
+                RandomForestRegressor_Model_Predictions=RandomForestRegressor_Model_Predictions.reset_index()
+                RandomForestRegressor_Model_Predictions.drop(columns='index',axis=1,inplace=True)
+
+
+
+                actual_values=y_test
+                actual_values=pd.DataFrame(actual_values)
+                actual_values=actual_values.reset_index()
+                actual_values.drop(columns='index',axis=1,inplace=True)
+
+    
+                combind_Result=pd.concat([actual_values,RandomForestRegressor_Model_Predictions],axis=1)
+                st.table(combind_Result.head(20))
+
+                plot_results("RandomForestRegressor",actual_values.head(50),RandomForestRegressor_Model_Predictions.head(50))
+
+                
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+                    )
+                    
+                st.markdown(
+                """
+                <h3 style='text-align: center;'>Model evaluation Of RandomForestRegressor</h3>
+                """,
+                unsafe_allow_html=True
+                )
+
+                MSE=mean_squared_error(y_test,Result1)
+                RMSE=np.sqrt(MSE)
+
+                
+ 
+
+                RandomForestRegressor_Model_evaluation={
+                    "Errors":["Mean Squred Error","Root Mean Squred Error"],
+                    "Values":[MSE,RMSE]
+                }
+                RandomForestRegressor_Model_evaluation=pd.DataFrame(RandomForestRegressor_Model_evaluation)
+                st.table(RandomForestRegressor_Model_evaluation)
+
+                
+                plot_bar("RandomForestRegressor",MSE,RMSE,"Blue")
+
+
+                
+
+                downlod_model(model_file_name)
+
+
+                
+
+
+            elif option4=='GradientBoostingRegressor Model':
+
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+                    )
+                    
+                st.markdown(
+                """
+                <h3 style='text-align: center;'>GradientBoostingRegressor Model Predictions</h3>
+                """,
+                unsafe_allow_html=True
+                )
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+
+
+
+                GradientBoostingRegressor_Model=GradientBoostingRegressor()
+
+                GradientBoostingRegressor_Model.fit(x_train,y_train)
+
+                model_file_name="GradientBoostingRegressor.pkl"
+
+
+                joblib.dump(GradientBoostingRegressor_Model, model_file_name)
+
+                Result2=GradientBoostingRegressor_Model.predict(x_test)
+       
+                
+                GradientBoostingRegressor_Model=pd.DataFrame(Result2)
+                GradientBoostingRegressor_Model.rename(columns={0:"Predicted Values"},inplace=True)
+                GradientBoostingRegressor_Model_Predictions=GradientBoostingRegressor_Model.reset_index()
+                GradientBoostingRegressor_Model_Predictions.drop(columns='index',axis=1,inplace=True)
+
+
+
+                actual_values=y_test
+                actual_values=pd.DataFrame(actual_values)
+                actual_values=actual_values.reset_index()
+                actual_values.drop(columns='index',axis=1,inplace=True)
+
+    
+                combind_Result=pd.concat([actual_values,GradientBoostingRegressor_Model_Predictions],axis=1)
+                st.table(combind_Result.head(20))
+                plot_results("GradientBoostingRegressor",actual_values.head(50),GradientBoostingRegressor_Model_Predictions.head(50))
+                
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+                    )
+                    
+                st.markdown(
+                """
+                <h3 style='text-align: center;'>Model evaluation Of GradientBoostingRegressor</h3>
+                """,
+                unsafe_allow_html=True
+                )
+
+                MSE=mean_squared_error(y_test,Result2)
+                RMSE=np.sqrt(MSE)
+
+                
+ 
+
+                GradientBoostingRegressor_Model_evaluation={
+                    "Errors":["Mean Squred Error","Root Mean Squred Error"],
+                    "Values":[MSE,RMSE]
+                }
+                GradientBoostingRegressor_Model_evaluation=pd.DataFrame(GradientBoostingRegressor_Model_evaluation)
+                st.table(GradientBoostingRegressor_Model_evaluation)
+                
+                plot_bar("GradientBoostingRegressor",MSE,RMSE,"Green")
+
+                
+
+                downlod_model(model_file_name)               
+
+
+
+            elif option4=='DecisionTreeRegressor Model':
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+                    )
+                    
+                st.markdown(
+                """
+                <h3 style='text-align: center;'>DecisionTreeRegressor Model Predictions</h3>
+                """,
+                unsafe_allow_html=True
+                )
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+
+
+
+                DecisionTreeRegressor_Model=DecisionTreeRegressor()
+
+                DecisionTreeRegressor_Model.fit(x_train,y_train)
+
+                
+                model_file_name="DecisionTreeRegressor.pkl"
+
+
+                joblib.dump(DecisionTreeRegressor_Model, model_file_name)
+ 
+
+                Result3=DecisionTreeRegressor_Model.predict(x_test)
+       
+                
+                DecisionTreeRegressor_Model=pd.DataFrame(Result3)
+                DecisionTreeRegressor_Model.rename(columns={0:"Predicted Values"},inplace=True)
+                DecisionTreeRegressor_Model_Predictions=DecisionTreeRegressor_Model.reset_index()
+                DecisionTreeRegressor_Model_Predictions.drop(columns='index',axis=1,inplace=True)
+
+
+
+                actual_values=y_test
+                actual_values=pd.DataFrame(actual_values)
+                actual_values=actual_values.reset_index()
+                actual_values.drop(columns='index',axis=1,inplace=True)
+
+    
+                combind_Result=pd.concat([actual_values,DecisionTreeRegressor_Model_Predictions],axis=1)
+                st.table(combind_Result.head(20))
+
+                plot_results("DecisionTreeRegressor",actual_values.head(50),DecisionTreeRegressor_Model_Predictions.head(50))
+                            
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+                    )
+                    
+                st.markdown(
+                """
+                <h3 style='text-align: center;'>Model evaluation Of DecisionTreeRegressor</h3>
+                """,
+                unsafe_allow_html=True
+                )
+
+                MSE=mean_squared_error(y_test,Result3)
+                RMSE=np.sqrt(MSE)
+
+                
+ 
+
+                DecisionTreeRegressor_Model_evaluation={
+                    "Errors":["Mean Squred Error","Root Mean Squred Error"],
+                    "Values":[MSE,RMSE]
+                }
+                DecisionTreeRegressor_Model_evaluation=pd.DataFrame(DecisionTreeRegressor_Model_evaluation)
+                st.table(DecisionTreeRegressor_Model_evaluation)
+               
+                plot_bar("DecisionTreeRegressor",MSE,RMSE,"Orange")  
+
+   
+                downlod_model(model_file_name)   
+
+
+            elif option4=='LinearRegression Model':
+ 
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+                    )
+                    
+                st.markdown(
+                """
+                <h3 style='text-align: center;'>LinearRegression Model Predictions</h3>
+                """,
+                unsafe_allow_html=True
+                )
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+
+
+
+                LinearRegression_Model=LinearRegression()
+
+                LinearRegression_Model.fit(x_train,y_train)
+
+
+                model_file_name="LinearRegression.pkl"
+
+
+                joblib.dump(LinearRegression_Model, model_file_name)   
+                 
+
+                Result4=LinearRegression_Model.predict(x_test)
+       
+                
+                LinearRegression_Model=pd.DataFrame(Result4)
+                LinearRegression_Model.rename(columns={0:"Predicted Values"},inplace=True)
+                LinearRegression_Model_Predictions=LinearRegression_Model.reset_index()
+                LinearRegression_Model_Predictions.drop(columns='index',axis=1,inplace=True)
+
+
+
+                actual_values=y_test
+                actual_values=pd.DataFrame(actual_values)
+                actual_values=actual_values.reset_index()
+                actual_values.drop(columns='index',axis=1,inplace=True)
+
+    
+                combind_Result=pd.concat([actual_values,LinearRegression_Model_Predictions],axis=1)
+                st.table(combind_Result.head(20))
+
+                plot_results("LinearRegression",actual_values.head(50),LinearRegression_Model_Predictions.head(50))
+                
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+                    )
+                    
+                st.markdown(
+                """
+                <h3 style='text-align: center;'>Model evaluation Of LinearRegression</h3>
+                """,
+                unsafe_allow_html=True
+                )
+
+                MSE=mean_squared_error(y_test,Result4)
+                RMSE=np.sqrt(MSE)
+
+                
+ 
+
+                LinearRegression_Model_evaluation={
+                    "Errors":["Mean Squred Error","Root Mean Squred Error"],
+                    "Values":[MSE,RMSE]
+                }
+                LinearRegression_Model_evaluation=pd.DataFrame(LinearRegression_Model_evaluation)
+                st.table(LinearRegression_Model_evaluation)
+
+                
+                plot_bar("LinearRegression",MSE,RMSE,"gray")
+
+
+                downlod_model(model_file_name)  
+
+
+
+
+ 
+            elif option4=='All Models':
+                
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+                    )
+                    
+                st.markdown(
+                """
+                <h3 style='text-align: center;'>RandomForestRegressor Model Predictions</h3>
+                """,
+                unsafe_allow_html=True
+                )
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+
+
+
+                RandomForestRegressor_Model=RandomForestRegressor()
+
+                RandomForestRegressor_Model.fit(x_train,y_train)
+
+                model_file_name1="RandomForestRegressor.pkl"
+
+
+                joblib.dump(RandomForestRegressor_Model, model_file_name1)  
+
+
+                Result1=RandomForestRegressor_Model.predict(x_test)
+       
+                
+                RandomForestRegressor_Model_Predictions=pd.DataFrame(Result1)
+                RandomForestRegressor_Model_Predictions.rename(columns={0:"Predicted Values"},inplace=True)
+                RandomForestRegressor_Model_Predictions=RandomForestRegressor_Model_Predictions.reset_index()
+                RandomForestRegressor_Model_Predictions.drop(columns='index',axis=1,inplace=True)
+
+
+
+                actual_values=y_test
+                actual_values=pd.DataFrame(actual_values)
+                actual_values=actual_values.reset_index()
+                actual_values.drop(columns='index',axis=1,inplace=True)
+
+    
+                combind_Result=pd.concat([actual_values,RandomForestRegressor_Model_Predictions],axis=1)
+                st.table(combind_Result.head(20))
+
+                plot_results("RandomForestRegressor",actual_values.head(50),RandomForestRegressor_Model_Predictions.head(50))                
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+                    )
+                    
+                st.markdown(
+                """
+                <h3 style='text-align: center;'>Model evaluation Of RandomForestRegressor</h3>
+                """,
+                unsafe_allow_html=True
+                )
+
+                MSE_RandomForestRegressor=mean_squared_error(y_test,Result1)
+                RMSE_RandomForestRegressor=np.sqrt(MSE_RandomForestRegressor)
+
+                
+ 
+
+                RandomForestRegressor_Model_evaluation={
+                    "Errors":["Mean Squred Error","Root Mean Squred Error"],
+                    "Values":[MSE_RandomForestRegressor,RMSE_RandomForestRegressor]
+                }
+                RandomForestRegressor_Model_evaluation=pd.DataFrame(RandomForestRegressor_Model_evaluation)
+                st.table(RandomForestRegressor_Model_evaluation)
+
+                
+
+                plot_bar("RandomForestRegressor",MSE_RandomForestRegressor,RMSE_RandomForestRegressor,"Blue")
+
+
+                downlod_model(model_file_name1) 
+
+
+
+
+
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+                    )
+                
+
+
+
+
+
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+                    )
+                    
+                st.markdown(
+                """
+                <h3 style='text-align: center;'>GradientBoostingRegressor Model Predictions</h3>
+                """,
+                unsafe_allow_html=True
+                )
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+
+
+
+                GradientBoostingRegressor_Model=GradientBoostingRegressor()
+
+                GradientBoostingRegressor_Model.fit(x_train,y_train)
+
+                model_file_name2="GradientBoostingRegressor.pkl"
+
+
+                joblib.dump(GradientBoostingRegressor_Model, model_file_name2) 
+
+
+                Result2=GradientBoostingRegressor_Model.predict(x_test)
+       
+                
+                GradientBoostingRegressor_Model=pd.DataFrame(Result2)
+                GradientBoostingRegressor_Model.rename(columns={0:"Predicted Values"},inplace=True)
+                GradientBoostingRegressor_Model_Predictions=GradientBoostingRegressor_Model.reset_index()
+                GradientBoostingRegressor_Model_Predictions.drop(columns='index',axis=1,inplace=True)
+
+
+
+                actual_values=y_test
+                actual_values=pd.DataFrame(actual_values)
+                actual_values=actual_values.reset_index()
+                actual_values.drop(columns='index',axis=1,inplace=True)
+
+    
+                combind_Result=pd.concat([actual_values,GradientBoostingRegressor_Model_Predictions],axis=1)
+                st.table(combind_Result.head(20))
+
+                
+                plot_results("GradientBoostingRegressor",actual_values.head(50),GradientBoostingRegressor_Model_Predictions.head(50)) 
+
+
+
+
+
+
+
+
+
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+                    )
+                    
+                st.markdown(
+                """
+                <h3 style='text-align: center;'>Model evaluation Of GradientBoostingRegressor</h3>
+                """,
+                unsafe_allow_html=True
+                )
+
+                MSE_GradientBoostingRegressor=mean_squared_error(y_test,Result2)
+                RMSE_GradientBoostingRegressor=np.sqrt(MSE_GradientBoostingRegressor)
+
+                
+ 
+
+                GradientBoostingRegressor_Model_evaluation={
+                    "Errors":["Mean Squred Error","Root Mean Squred Error"],
+                    "Values":[MSE_GradientBoostingRegressor,RMSE_GradientBoostingRegressor]
+                }
+                GradientBoostingRegressor_Model_evaluation=pd.DataFrame(GradientBoostingRegressor_Model_evaluation)
+                st.table(GradientBoostingRegressor_Model_evaluation)
+
+                plot_bar("GradientBoostingRegressor",MSE_GradientBoostingRegressor,RMSE_GradientBoostingRegressor,"Green")
+
+                downlod_model(model_file_name2) 
+
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+                    )              
+
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+                    )
+                    
+                st.markdown(
+                """
+                <h3 style='text-align: center;'>DecisionTreeRegressor Model Predictions</h3>
+                """,
+                unsafe_allow_html=True
+                )
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+
+
+
+                DecisionTreeRegressor_Model=DecisionTreeRegressor()
+
+                DecisionTreeRegressor_Model.fit(x_train,y_train)
+
+                model_file_name3="DecisionTreeRegressor.pkl"
+
+
+                joblib.dump(DecisionTreeRegressor_Model, model_file_name3) 
+
+
+
+                Result3=DecisionTreeRegressor_Model.predict(x_test)
+       
+                
+                DecisionTreeRegressor_Model=pd.DataFrame(Result3)
+                DecisionTreeRegressor_Model.rename(columns={0:"Predicted Values"},inplace=True)
+                DecisionTreeRegressor_Model_Predictions=DecisionTreeRegressor_Model.reset_index()
+                DecisionTreeRegressor_Model_Predictions.drop(columns='index',axis=1,inplace=True)
+
+
+
+                actual_values=y_test
+                actual_values=pd.DataFrame(actual_values)
+                actual_values=actual_values.reset_index()
+                actual_values.drop(columns='index',axis=1,inplace=True)
+
+    
+                combind_Result=pd.concat([actual_values,DecisionTreeRegressor_Model_Predictions],axis=1)
+                st.table(combind_Result.head(20))
+                plot_results("DecisionTreeRegressor",actual_values.head(50),DecisionTreeRegressor_Model_Predictions.head(50))               
+
+                
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+                    )
+                    
+                st.markdown(
+                """
+                <h3 style='text-align: center;'>Model evaluation Of DecisionTreeRegressor</h3>
+                """,
+                unsafe_allow_html=True
+                )
+
+                MSE_DecisionTreeRegressor=mean_squared_error(y_test,Result3)
+                RMSE_DecisionTreeRegressor=np.sqrt(MSE_DecisionTreeRegressor)
+
+                
+ 
+
+                DecisionTreeRegressor_Model_evaluation={
+                    "Errors":["Mean Squred Error","Root Mean Squred Error"],
+                    "Values":[MSE_DecisionTreeRegressor,RMSE_DecisionTreeRegressor]
+                }
+                DecisionTreeRegressor_Model_evaluation=pd.DataFrame(DecisionTreeRegressor_Model_evaluation)
+                st.table(DecisionTreeRegressor_Model_evaluation)
+
+                plot_bar("DecisionTreeRegressor",MSE_DecisionTreeRegressor,RMSE_DecisionTreeRegressor,"Orange")  
+
+                
+
+                downlod_model(model_file_name3) 
+
+
+
+
+
+
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+                    )
+                    
+                st.markdown(
+                """
+                <h3 style='text-align: center;'>LinearRegression Model Predictions</h3>
+                """,
+                unsafe_allow_html=True
+                )
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+
+
+
+                LinearRegression_Model=LinearRegression()
+
+                LinearRegression_Model.fit(x_train,y_train)
+
+
+                model_file_name4="LinearRegression.pkl"
+
+
+                joblib.dump(LinearRegression_Model, model_file_name4) 
+
+
+
+
+                Result4=LinearRegression_Model.predict(x_test)
+       
+                
+                LinearRegression_Model=pd.DataFrame(Result4)
+                LinearRegression_Model.rename(columns={0:"Predicted Values"},inplace=True)
+
+                LinearRegression_Model_Predictions=LinearRegression_Model.reset_index()
+                LinearRegression_Model_Predictions.drop(columns='index',axis=1,inplace=True)
+
+
+
+                actual_values=y_test
+                actual_values=pd.DataFrame(actual_values)
+                actual_values=actual_values.reset_index()
+                actual_values.drop(columns='index',axis=1,inplace=True)
+
+    
+                combind_Result=pd.concat([actual_values,LinearRegression_Model_Predictions],axis=1)
+                st.table(combind_Result.head(20))
+
+                plot_results("LinearRegression",actual_values.head(50),LinearRegression_Model_Predictions.head(50))                
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+                    )
+                    
+                st.markdown(
+                """
+                <h3 style='text-align: center;'>Model evaluation Of LinearRegression</h3>
+                """,
+                unsafe_allow_html=True
+                )
+
+                MSE_LinearRegression=mean_squared_error(y_test,Result4)
+                RMSE_LinearRegression=np.sqrt(MSE_LinearRegression)
+
+                
+ 
+
+                LinearRegression_Model_evaluation={
+                    "Errors":["Mean Squred Error","Root Mean Squred Error"],
+                    "Values":[MSE_LinearRegression,RMSE_LinearRegression]
+                }
+                LinearRegression_Model_evaluation=pd.DataFrame(LinearRegression_Model_evaluation)
+                st.table(LinearRegression_Model_evaluation)
+
+                plot_bar("LinearRegression",MSE_LinearRegression,RMSE_LinearRegression,"gray")  
+
+                downlod_model(model_file_name4)              
+
+
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+                    )
+                
+
+                st.markdown(
+                """
+                <h1 style='text-align: center;'>All Models Detail</h1>
+                """,
+                unsafe_allow_html=True
+                )
+
+                all_Result={
+                    "Models":["Linear Regression Model","Decision Tree Regressor Model","Random Forest Regressor Model", "Gradient Boosting Regressor Model"],
+                    "RMS/Error":[RMSE_LinearRegression,RMSE_DecisionTreeRegressor,RMSE_RandomForestRegressor,RMSE_GradientBoostingRegressor],
+                    "MSE/Error":[MSE_LinearRegression,MSE_DecisionTreeRegressor,MSE_RandomForestRegressor,MSE_GradientBoostingRegressor]
+                }
+                all_Result=pd.DataFrame(all_Result)
+                all_Result=all_Result.sort_values(by="RMS/Error",ascending=True).reset_index()
+                all_Result.drop(columns="index",axis=1,inplace=True)
+                st.table(all_Result)
+
+                # Plot the combined comparison of all models
+                plot_combined_comparison(all_Result)
+
+
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+                    )
+                # Sutibal_model=all_Result.loc[,"Models"]
+
+                Sutibal_model = all_Result.loc[all_Result.index[0], 'Models'] 
+
+                st.subheader(f"Most sutible Model For {DataSet_name} DataSet are {Sutibal_model}")
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+                    )               
+
+                
+
+
+
+
+
+
+
+
+           
+        except Exception as e:
+            st.error(f"An error occurred while reading the file: {e}")
+    else:
+        st.error("No file uploaded yet!")
+
+    # Load_DataSet_button = submation_file.form_submit_button("Load DataSet")
+
+
+
+
+
+# DataSet Preprocessing
+
+elif selections == 'DataSet Preprocessing':
+    st.markdown(
+                                    """
+                                    <h1 style='text-align: center;color:orange'>Here Preprocess Your DataSet</h1>
+                                    """,
+                                    unsafe_allow_html=True
+                                    ) 
+
+    st.markdown(
+                            """
+                            <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                            """,
+                            unsafe_allow_html=True
+                        )     
+
+    # If 'Upload DataSet' is selected, display the title
+    
+    # submation_file=st.form("Uploding the file")
+    DataSet_name=st.text_input(placeholder="DataSet Name",label="Insert Dataset Name")
+
+
+    input=st.expander("Insert your Data Here")
+    # File uploader widget
+    uploaded_file = st.file_uploader(label="Upload CSV file", type=["csv"])
+
+    # Check if a file has been uploaded
+    if uploaded_file is not None:
+        try:
+
+            # Read the CSV file into a DataFrame
+            data = pd.read_csv(uploaded_file)
+            data=data.dropna()
+            st.success("File uploaded successfully!")
+            # Display the DataFrame
+
+            st.title(f"{DataSet_name} DataSet Loaded")
+            st.markdown("""<hr style="border: none; height: 2px;width: 60%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+            )
+            st.write(f"Shape {data.shape}")
+            st.dataframe(data)
+
+            st.markdown(
+                        """
+                        <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                        """,
+                        unsafe_allow_html=True
+                            )
+            
+            st.markdown(
+                        """
+                        <h1 style='text-align: center;'>Preprocessing the DataSet</h1>
+                        """,
+                        unsafe_allow_html=True
+                        )
+            st.markdown(
+                        """
+                        <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                        """,
+                        unsafe_allow_html=True
+                            )
+            
+
+
+# Basic information About the DataSet
+
+            st.markdown(
+                        """
+                        <h3 style='text-align: center;'>Basic information About the DataSet</h3>
+                        """,
+                        unsafe_allow_html=True
+                        )
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+
+
+
+
+            tab1,tab2,tab3=st.tabs(["DataSet Shape","DataSet dataTypes","statistics Of DataSet"])
+
+
+# dataSet shape
+
+            with tab1:
+                st.subheader("    ")
+                st.subheader("DataSet Shape")
+                st.write(f"Total Number of Rows : {data.shape[0]}")
+                st.write(f"Total Number of Columns : {data.shape[1]}")
+
+
+
+# DataSet dataTypes
+
+            with tab2:
+                st.subheader("    ")
+                st.subheader("DataSet dataTypes")
+                
+
+                
+                full_info=dict()
+                for i in data.columns:
+                    full_info[i]=data[i].dtypes
+                
+                datatypes_info=pd.DataFrame(list(full_info.items()), columns=['Column Name', 'Data Type'])
+                st.table(datatypes_info)
+                st.subheader("    ")
+
+
+# statistics Of DataSet
+
+            with tab3:
+
+                st.subheader(" ")
+                st.subheader("statistics Of DataSet")
+                paragraph = """
+                                <p>The statistics of a dataset are typically 
+                                represent a summary of key metrics that provide insights
+                                into the data's distribution and characteristics. 
+                                These metrics include the count of non-null entries, mean (average), standard deviation (which measures the spread of the data), minimum and maximum values, and the 25th, 50th (median), and 75th percentiles (quartiles). These statistical summaries help understand the central tendency, variability, and overall distribution of the data, which are crucial for data analysis and interpretation.</p>
+                                """
+
+            # Print the paragraph in the Streamlit app
+                st.markdown(paragraph, unsafe_allow_html=True)
+                st.dataframe(data.describe())
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+           
+
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 100%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+            )
+
+
+            # remove the columns
+                   
+            
+
+            st.markdown(
+                        """
+                        <h1 style='text-align: center;'>Remove Irrelevant Columns</h1>
+                        """,
+                        unsafe_allow_html=True
+                        )
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+
+
+            
+            columns_list=data.columns
+            columns_list2=list()
+            for column in columns_list:
+                columns_list2.append(column)
+            
+
+            option=st.multiselect(
+                    label='Remove The unnecessary  Features',
+                    options=columns_list2,
+                    default=columns_list2
+                )
+                
+            final_DataSet=data[option]
+            st.markdown(
+                        """
+                        <h4 style='text-align: center;'>Now Your DataSet are Look Like This</h4>
+                        """,
+                        unsafe_allow_html=True
+                        )   
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+        
+         
+            st.dataframe(final_DataSet.head(10))
+
+
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 100%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+
+
+# removeing the dupliacted rows
+
+            st.markdown(
+                        """
+                        <h4 style='text-align: center;'>Finding Duplicated Rows</h4>
+                        """,
+                        unsafe_allow_html=True
+                        )  
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+
+            duplicate_rows=final_DataSet[final_DataSet.duplicated()]
+            if duplicate_rows.shape[0]==0:
+                st.success("There is No Dupliacted Rows 🤷")
+
+
+
+
+
+
+            else:
+                st.dataframe(duplicate_rows)
+                index_list=list()
+                for i in duplicate_rows.index:
+                    index_list.append(i)
+                
+                final_DataSet.drop(index_list,axis=0,inplace=True)
+
+                with st.spinner("Removing The Duplicted Rows.."):
+                    time.sleep(1)
+                
+                st.success("Duplicted rows are Remove From the DataSet")
+
+                st.markdown(
+                        """
+                        <h4 style='text-align: center;'>After Removing Dupulicted rows Your DataSet Are look like this</h4>
+                        """,
+                        unsafe_allow_html=True
+                        ) 
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+               
+                st.dataframe(final_DataSet)
+
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 100%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+                
+            
+
+
+
+
+# Detecting The Outliers in DataSet
+            st.markdown(
+                        """
+                        <h1 style='text-align: center;'>Detecting and Removing The Outliers in DataSet</h1>
+                        """,
+                        unsafe_allow_html=True
+                        ) 
+            
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+            
+
+
+
+            # selecting columns for outliers detection 
+            full_info=dict()
+            for i in final_DataSet.columns:
+                full_info[i]=data[i].dtypes
+                
+ 
+            
+
+            columns_selction_for_outliers=list()
+
+            for key in full_info:
+                if full_info[key]!='object':
+                    columns_selction_for_outliers.append(key)
+            
+
+            st.markdown(
+                        """
+                        <h3 style='text-align: center;'>Detecting Outliers </h3>
+                        """,
+                        unsafe_allow_html=True
+                        ) 
+            
+            create_boxplots(final_DataSet,columns_selction_for_outliers)
+
+
+            st.markdown(
+                        """
+                        <h3 style='text-align: center;'>See with Focuse </h3>
+                        """,
+                        unsafe_allow_html=True
+                        )            
+            # Column selection
+            selected_columns = st.multiselect('Select columns for boxplot To See With a Focus:',
+                                              options= columns_selction_for_outliers,
+                                              default=None
+                                              
+                                              )
+
+            # Display boxplot in tabs if columns are selected
+            if selected_columns:
+                tabs = st.tabs(selected_columns)
+                for tab, column in zip(tabs, selected_columns):
+                    with tab:
+                        create_boxplots(final_DataSet, [column])
+            else:
+                st.write("Please select at least one column.")           
+
+
+            # Removing the Ouliers
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 100%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+
+            st.markdown(
+                        """
+                        <h3 style='text-align: center;'>Removing Outliers </h3>
+                        """,
+                        unsafe_allow_html=True
+                        )
+            
+
+
+
+            # # first try to remove outliers
+            cleaned_data1 = Outliers_Removal(final_DataSet, columns_selction_for_outliers)
+
+
+            # # Second try to remove outliers
+            cleaned_data2 = Outliers_Removal(cleaned_data1, columns_selction_for_outliers)
+
+            # # last try to remove outliers
+            cleaned_data5 = Outliers_Removal(cleaned_data2, columns_selction_for_outliers)
+
+
+
+# show final boxplot 
+            create_boxplots(cleaned_data5,columns_selction_for_outliers)     
+
+     
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 100%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+
+            # Column selection
+            selected_columns = st.multiselect(label='Select columns for boxplot ',
+                                              options= columns_selction_for_outliers,
+                                              default=None
+                                              
+                                              )
+
+            # Display boxplot in tabs if columns are selected
+            if selected_columns:
+                tabs = st.tabs(selected_columns)
+                for tab, column in zip(tabs, selected_columns):
+                    with tab:
+                        create_boxplots(cleaned_data5, [column])
+
+
+
+
+
+# Display your Clean DataSet
+
+
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 100%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+
+
+
+            st.markdown(
+                        """
+                        <h4 style='text-align: center;'>After Removing Outliers  Your DataSet Are look like this</h4>
+                        """,
+                        unsafe_allow_html=True
+                        ) 
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+            st.subheader("DataSet Shape")
+            st.write(f"Total Number of Rows : {cleaned_data5.shape[0]}")
+            st.write(f"Total Number of Columns : {cleaned_data5.shape[1]}")
+            st.dataframe(cleaned_data5)
+
+# Here is the leatest dataSet on the name of "cleaned_data5"
+
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 100%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Extrcating the Categorical Data
+            st.markdown(
+                        """
+                        <h3 style='text-align: center;'>Extracting The Categorical Features in DataSet</h3>
+                        """,
+                        unsafe_allow_html=True
+                        ) 
+
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+
+
+            full_info_Categorical_Features=dict()
+            for i in cleaned_data5.columns:
+                full_info_Categorical_Features[i]=cleaned_data5[i].dtypes
+                
+ 
+
+
+            columns_selction_for_Encoding_and_Decoding=list()
+
+            for key in full_info_Categorical_Features:
+                if full_info[key]=='object':
+                    columns_selction_for_Encoding_and_Decoding.append(key)    
+
+
+            Categorical_Features_dataSet=cleaned_data5[columns_selction_for_Encoding_and_Decoding]
+            
+            if Categorical_Features_dataSet.shape[1]==0:
+                flag1=1
+                st.success("There is No Categorical Features In This DataSet 🤷")
+                
+
+            else:
+                st.dataframe(Categorical_Features_dataSet)     
+
+                    
+            st.markdown(
+                    """
+                    <hr style="border: none; height: 2px;width: 100%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                    """,
+                    unsafe_allow_html=True
+                )  
+
+
+
+
+
+
+
+
+
+
+
+
+            # flage if there is no Catgrical data than do not show the other code  
+                            
+            if flag1==0:
+                pass
+ 
+                # Key Concepts About The Nominal And ordinal Features
+                st.markdown(
+                            """
+                            <h2 style='text-align: center;'>Key Concepts About The Nominal And ordinal Features</h2>
+                            """,
+                            unsafe_allow_html=True
+                            ) 
+
+                st.markdown(
+                    """
+                    <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                    """,
+                    unsafe_allow_html=True
+                )
+
+                Right_Move_Tab,Nominal_tab,ordinal_tab=st.tabs(['➡️','Nominal Features','ordinal Features'])
+
+
+                with Right_Move_Tab:
+                    st.title("Know About Key Concepts ➡️")
+
+
+
+
+    # nominal data explination
+                
+                with Nominal_tab:
         
 
+                    st.title("What are Nominal Features?")
+                    st.markdown("""
+                    **Explanation:** Nominal features represent categorical data that do not have any intrinsic order or ranking among the categories. Each category is distinct and mutually exclusive, and the order in which categories are presented is arbitrary. These features are qualitative in nature and are used to label different groups or types within the data.
+                    """)
+                    st.markdown("**Example:**")
+                    st.markdown("""
+                    - **Gender**: Categories include male, female, and other.
+                    - **Blood Type**: Categories include A, B, AB, and O.
+                    - **Color**: Categories include red, blue, green, and yellow.
+                    - **Type of Pet**: Categories include dog, cat, bird, and fish.
+                    """)
+                    st.markdown("**Which Technique is Used for Encoding/Labeling?**")
+                    st.markdown("""
+                    - **One-Hot Encoding**: This technique creates binary columns for each category, where a value of 1 indicates the presence of a category and 0 indicates its absence. It is useful because it avoids implying any ordinal relationship between categories.
+                        - **Example**: For the feature "Color" with categories red, blue, and green, one-hot encoding would create three new binary features: Color_red, Color_blue, and Color_green.
+                    - **get_dummies**: The get_dummies function in Pandas is used to convert categorical variables into numerical (dummy/indicator) variables. It creates new binary columns for each category in a categorical variable, where each column represents one category and contains binary values (0 or 1) indicating the presence or absence of that category in the original data
+                        - **Example**:Imagine you have a dataset with a column that represents different types of fruits: apples, oranges, and bananas. Using get_dummies on this column would create new columns for each fruit type. Each row in these new columns would have a value of 1 if that row corresponds to that fruit type, and 0 otherwise.
+                                
+                                """)
+                    
+                    # Displaying code ans their output
+                    
+                    get_dummies='''
+    import pandas as pd
+
+    # Sample data
+    data = {
+        'ID': [1, 2, 3, 4, 5],
+        'Fruit': ['Apple', 'Orange', 'Banana', 'Apple', 'Banana']
+    }
+
+    df = pd.DataFrame(data)
+
+    # Applying get_dummies to encode the 'Fruit' column
+    encoded_df = pd.get_dummies(df, columns=['Fruit'])
+
+    # Display the original and encoded DataFrame
+    print("Original DataFrame:")
+    print(df)
+
+    print("\nEncoded DataFrame using get_dummies:")
+    print(encoded_df)
+
+
+
+    '''
+
+                    output_code='''
+    Original DataFrame:
+    ID   Fruit
+    0   1   Apple
+    1   2  Orange
+    2   3  Banana
+    3   4   Apple
+    4   5  Banana
+
+    Encoded DataFrame using get_dummies:
+    ID  Fruit_Apple  Fruit_Banana  Fruit_Orange
+    0   1            1             0             0
+    1   2            0             0             1
+    2   3            0             1             0
+    3   4            1             0             0
+    4   5            0             1             0
+
+
+    '''
+                    st.subheader("get_dummies Code")
+                    st.code(get_dummies,language='python')
+
+                    st.subheader("Output")
+                    st.code(output_code,language='yaml')   
+
+
+
+
+                    One_Hot_Encoding='''
+    import streamlit as st
+    import pandas as pd
+    from sklearn.preprocessing import OneHotEncoder
+
+    # Sample data
+    data = {
+        'ID': [1, 2, 3, 4, 5],
+        'Fruit': ['Apple', 'Orange', 'Banana', 'Apple', 'Banana']
+    }
+
+    df = pd.DataFrame(data)
+
+    # Creating an instance of OneHotEncoder
+    encoder = OneHotEncoder(sparse=False)
+
+    # Encoding 'Fruit' column
+    encoded_data = encoder.fit_transform(df[['Fruit']])
+
+    # Creating a new DataFrame with encoded columns
+    encoded_df = pd.DataFrame(encoded_data, columns=encoder.get_feature_names(['Fruit']))
+
+
+    print(encoded_df)
+
+
+    '''
+
+                    output_code='''
+    Encoded DataFrame using OneHotEncoder:
+    ID  Fruit_Apple  Fruit_Banana  Fruit_Orange
+    0   1            1             0             0
+    1   2            0             0             1
+    2   3            0             1             0
+    3   4            1             0             0
+    4   5            0             1             0
+
+    '''
+                    st.subheader("OneHotEncoder code")
+                    st.code(One_Hot_Encoding,language='python')
+
+                    st.subheader("Output")
+                    st.code(output_code,language='yaml')   
 
 
 
@@ -1065,52 +2477,2532 @@ def Main_PAGE(data):
 
 
 
-if file_upload_sucuss ==1:
-    Main_PAGE(data)
 
 
-else:
 
-    def show_description():
-    # HTML content with CSS styling
-        description_html = """
-        <div class="app-description">
-            <h2>Streamlit EDA Web App</h2>
-            <p>This web application is designed to provide a comprehensive and interactive platform for visualizing data and conducting Exploratory Data Analysis (EDA). Built using Streamlit, the app allows users to easily upload datasets, generate insightful visualizations, and uncover key patterns and trends in their data.</p>
-            <p>With features such as dynamic histograms, scatter plots, box plots, and heatmaps, users can explore their data from multiple angles. The app also includes options for color customization, making it a versatile tool for data analysts and enthusiasts alike.</p>
-            <p>Whether you are analyzing missing values, data types, or correlations, this app streamlines the process of EDA, helping you make informed decisions based on your data.</p>
+    # ordibal data explination
+
+
+                with ordinal_tab:
+                    st.title("What are Ordinal Features?")
+                    st.markdown("""
+                    **Explanation:** Ordinal features represent categorical data that have a meaningful order or ranking among the categories. The order of the categories indicates relative positions, but the differences between the categories are not necessarily equal or meaningful. These features are also qualitative but have an added layer of order.
+                    """)
+                    st.markdown("**Example:**")
+                    st.markdown("""
+                    - **Education Level**: Categories include high school, bachelor’s degree, master’s degree, and PhD.
+                    - **Customer Satisfaction**: Categories include unsatisfied, neutral, satisfied, and very satisfied.
+                    - **Socioeconomic Status**: Categories include low, middle, and high.
+                    - **Movie Rating**: Categories include 1 star, 2 stars, 3 stars, 4 stars, and 5 stars.
+                    """)
+                    st.markdown("**Which Technique is Used for Encoding/Labeling?**")
+                    st.markdown("""
+                    - **Lable Encoding**: This technique assigns a unique integer to each category, preserving the ordinal relationship. The integer values reflect the order of the categories.
+                        - **Example**: For the feature "Education Level" with categories high school, bachelor’s degree, master’s degree, and PhD, integer encoding might assign 1 to high school, 2 to bachelor’s degree, 3 to master’s degree, and 4 to PhD.
+                
+                        - High school: 1
+                        - Bachelor’s degree: 2
+                        - Master’s degree: 3
+                        - PhD: 4
+                    - **Ordinal Encoding**: This is similar to integer encoding but specifically ensures the ordinal relationship is maintained and understood by the machine learning algorithm.
+                        - **Example**: For the feature "Customer Satisfaction" with categories unsatisfied, neutral, satisfied, and very satisfied, ordinal encoding would assign 1 to unsatisfied, 2 to neutral, 3 to satisfied, and 4 to very satisfied.
+                    """)
+
+
+
+                    Nominal_code='''
+                        from sklearn.preprocessing import LabelEncoder
+
+                        # Sample data
+                        education_levels = ["high school", "bachelor’s degree", "master’s degree", "PhD"]
+
+                        # Create a label encoder instance
+                        label_encoder = LabelEncoder()
+
+                        # Fit the label encoder to the data
+                        label_encoder.fit(education_levels)
+
+                        # Transform the data into numerical labels
+                        encoded_labels = label_encoder.transform(education_levels)
+
+                        # Display the encoded labels
+                        print(f"Encoded labels: {encoded_labels}")
+
+
+    '''
+                    st.subheader("Lable Encoding Code")
+                    st.code(Nominal_code,language='python')
+
+                    # Define custom CSS for code block
+                    css = '''
+                    <style>
+                    .st-emotion-cache-1hskohh {
+                        margin: 0px;
+                        padding-right: 2.75rem;
+                        color: rgb(49, 51, 63);
+                        border-radius: 0.5rem;
+                        background: #0000001a;
+                    }
+                                    </style>
+                    '''
+
+                    # Render code block with custom CSS
+                    st.markdown(css, unsafe_allow_html=True)
+
+                    st.subheader("Ordinal Encoding Code")
+
+                    ordinal_code='''
+                        from sklearn.preprocessing import OrdinalEncoder
+                        import numpy as np
+
+                        # Define the categories with explicit order
+                        education_levels = np.array(["high school", "bachelor’s degree", "master’s degree", "PhD"]).reshape(-1, 1)
+                        categories = [["high school", "bachelor’s degree", "master’s degree", "PhD"]]
+
+                        # Create an ordinal encoder instance with specified categories
+                        ordinal_encoder = OrdinalEncoder(categories=categories)
+
+                        # Fit and transform the data
+                        encoded_labels = ordinal_encoder.fit_transform(education_levels)
+
+                        # Display the encoded labels
+                        print(f"Encoded labels: {encoded_labels.ravel()}")
+
+
+    '''
+                    st.code(ordinal_code,language='python')
+
+
+                
+
+
+
+                st.markdown(
+                    """
+                    <hr style="border: none; height: 2px;width: 100%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                    """,
+                    unsafe_allow_html=True
+                )
+
+
+# if there is Categorical_Features in dataset than show below code other wise do not show
+
+            
+
+                st.markdown(
+                            """
+                            <h3 style='text-align: center;'>Selecting Ordinal Features</h3>
+                            """,
+                            unsafe_allow_html=True
+                            )
+                        
+
+
+                selected_columns = st.multiselect(label='Select Ordinal Features ',
+                                                options= Categorical_Features_dataSet.columns,
+                                                default=None
+                                                
+                                                )
+                
+                # Display boxplot in tabs if columns are selected
+                if selected_columns:
+                    tabs = st.tabs(selected_columns)
+                    for tab, column in zip(tabs, selected_columns):
+                        with tab:
+                            st.subheader(f"Unique Values in {column}")
+
+                            st.dataframe(Categorical_Features_dataSet[column].unique())
+
+
+
+
+
+                st.markdown(
+                    """
+                    <hr style="border: none; height: 2px;width: 100%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                    """,
+                    unsafe_allow_html=True
+                )
+
+
+                st.markdown(
+                            """
+                            <h3 style='text-align: center;'>Selecting the Encoder For Ordinal Features</h3>
+                            """,
+                            unsafe_allow_html=True
+                            )
+
+
+
+
+                st.markdown(
+                    """
+                    <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                    """,
+                    unsafe_allow_html=True
+                )
+                # Options for the radio button
+                options = ["LabelEncoder", "OrdinalEncoder","No Need"]
+
+                # Creating the radio button
+                selected_encoder = st.radio(
+                    label="Select an Encoder:",
+                    options=options,
+                    index=2 ,# Preselecting "Option 2"
+                    format_func=lambda x: f"⏩ {x}",  # Adding an arrow before each option
+    
+                )
+
+
+                st.markdown(
+                    """
+                    <hr style="border: none; height: 2px;width: 100%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                    """,
+                    unsafe_allow_html=True
+                )
+
+# lable encoding
+
+                if selected_encoder=='LabelEncoder':
+
+
+                    
+ 
+                    st.markdown(
+                            """
+                            <h3 style='text-align: center;'>LabelEncoder Are only Works on Target column</h3>
+                            """,
+                            unsafe_allow_html=True
+                            )                   
+                    
+                    st.markdown(
+                        """
+                        <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                        """,
+                        unsafe_allow_html=True
+                    )
+
+                    selected_Target = st.radio(
+                        label="Select an Target Varible",
+                        options=Categorical_Features_dataSet.columns,
+                        index=None ,# Preselecting "Option 2"
+                        format_func=lambda x: f"➡️ {x}",  # Adding an arrow before each option
+        
+                    )
+
+                    # Create a label encoder instance
+                    label_encoder_for_Target = LabelEncoder()
+
+                    # Fit the label encoder to the data
+                    Target_encoded=label_encoder_for_Target.fit_transform(Categorical_Features_dataSet[selected_Target])
+
+
+
+                    Target_encoded=pd.DataFrame(Target_encoded)
+
+                    Target_encoded=Target_encoded.rename(columns={0:selected_Target})
+
+
+ 
+
+
+
+                    New_clean_data=cleaned_data5.drop(columns=selected_Target,axis=1)
+
+                    New_clean_data = New_clean_data.reset_index(drop=True)
+
+                    # st.subheader("New_clean_data")
+                    # st.write(New_clean_data.shape)
+
+
+                    # st.dataframe(New_clean_data)
+
+
+
+
+                    New_clean_data=pd.concat([New_clean_data,Target_encoded],axis=1)
+                    # Resetting index (not typically necessary)
+                    New_clean_data = New_clean_data.reset_index(drop=True)
+
+
+
+                    st.markdown(
+                        """
+                        <hr style="border: none; height: 2px;width: 100%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                        """,
+                        unsafe_allow_html=True
+                    )
+
+                    
+                    st.markdown(
+                            """
+                            <h3 style='text-align: center;'>Lable DataSet</h3>
+                            """,
+                            unsafe_allow_html=True
+                            )
+
+                    st.markdown(
+                        """
+                        <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                        """,
+                        unsafe_allow_html=True
+                    )
+
+                    st.dataframe(New_clean_data)
+
+
+                    st.markdown(
+                        """
+                        <hr style="border: none; height: 2px;width: 100%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                        """,
+                        unsafe_allow_html=True
+                    )
+
+
+
+# ordinal encoding
+
+                elif selected_encoder=='OrdinalEncoder':
+
+
+                    st.markdown(
+                            """
+                            <h3 style='text-align: center;'>Select and order the categories for Each Feature</h3>
+                            """,
+                            unsafe_allow_html=True
+                            )
+                    
+                    st.markdown(
+                        """
+                        <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                        """,
+                        unsafe_allow_html=True
+                    )
+                    # st.write(selected_columns)
+
+                    # Get ordered unique values for all categorical columns
+                    ordered_values = get_ordered_unique_values(Categorical_Features_dataSet,selected_columns)
+
+
+
+                    # Preparing the categories in the format required by OrdinalEncoder
+                    categories = []
+                    columns_to_encode = []
+
+                    for col in Categorical_Features_dataSet.columns:
+                        if col in ordered_values:
+                            categories.append(ordered_values[col])
+                            columns_to_encode.append(col)
+
+                    # Applying OrdinalEncoder with custom categories
+                    encoder = OrdinalEncoder(categories=categories)
+                    encoded_data = encoder.fit_transform(Categorical_Features_dataSet[columns_to_encode])
+
+                    # Convert the encoded data back to a DataFrame
+                    encoded_data = pd.DataFrame(encoded_data, columns=columns_to_encode)
+
+
+
+                    encoded_data = encoded_data.reset_index(drop=True)
+
+                    # st.subheader("encoded")
+                    # st.write(encoded_data.shape)
+
+
+                    # st.dataframe(encoded_data)
+
+
+
+
+
+
+                    
+
+
+
+                    New_clean_data=cleaned_data5.drop(columns=selected_columns,axis=1)
+
+                    New_clean_data = New_clean_data.reset_index(drop=True)
+
+                    # st.subheader("New_clean_data")
+                    # st.write(New_clean_data.shape)
+
+
+                    # st.dataframe(New_clean_data)
+
+
+
+                    New_clean_data=pd.concat([New_clean_data,encoded_data],axis=1)
+                    # Resetting index (not typically necessary)
+                    New_clean_data = New_clean_data.reset_index(drop=True)
+
+
+
+                    st.markdown(
+                        """
+                        <hr style="border: none; height: 2px;width: 100%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                        """,
+                        unsafe_allow_html=True
+                    )
+
+
+   
+                    st.markdown(
+                            """
+                            <h3 style='text-align: center;'>Encoded DataSet</h3>
+                            """,
+                            unsafe_allow_html=True
+                            )
+                    
+                    st.markdown(
+                        """
+                        <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                        """,
+                        unsafe_allow_html=True
+                    )
+   
+
+                    st.dataframe(New_clean_data)
+
+
+
+
+
+
+
+
+
+                    st.markdown(
+                        """
+                        <hr style="border: none; height: 2px;width: 100%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                        """,
+                        unsafe_allow_html=True
+                    )
+
+
+
+                elif selected_encoder=='No Need':
+                    New_clean_data=cleaned_data5
+
+                
+
+
+   
+                st.markdown(
+                                """
+                                <h3 style='text-align: center;'>Selecting Nominal Features</h3>
+                                """,
+                                unsafe_allow_html=True
+                                )
+                        
+                st.markdown(
+                            """
+                            <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                            """,
+                            unsafe_allow_html=True
+                        )
+                
+
+
+                full_info_Categorical_Features=dict()
+                for i in New_clean_data.columns:
+                    full_info_Categorical_Features[i]=New_clean_data[i].dtypes
+                    
+    
+                # st.write(full_info_Categorical_Features)
+
+                columns_selction_for_Nominal_Encoding=list()
+
+                for key in full_info_Categorical_Features:
+
+                    if full_info_Categorical_Features[key]=='object':
+                        columns_selction_for_Nominal_Encoding.append(key)    
+
+
+                Categorical_Features_dataSet=New_clean_data[columns_selction_for_Nominal_Encoding]
+                
+
+                # st.dataframe(Categorical_Features_dataSet)  
+
+    # selctecing  encoding for the nominal Features 
+
+                selected_Nonimal_columns = st.multiselect(label='Select Nominal Features ',
+                                                    options= Categorical_Features_dataSet.columns,
+                                                    default=None
+                                                    
+                                                    )
+                
+
+
+                st.markdown(
+                                """
+                                <h3 style='text-align: center;'>Selecting the Encoder For Nominal Features</h3>
+                                """,
+                                unsafe_allow_html=True
+                                )
+
+
+
+
+                st.markdown(
+                        """
+                        <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                        """,
+                        unsafe_allow_html=True
+                    )
+                
+
+                    # Options for the radio button
+                options = ["Get Dummies", "One Hot encoding","No Need"]
+
+                    # Creating the radio button
+                selected_encoder = st.radio(
+                        label="Select an Encoder:",
+                        options=options,
+                        index=2 ,# Preselecting "Option 2"
+                        format_func=lambda x: f"⏩ {x}",  # Adding an arrow before each option
+        
+                    )
+
+
+
+                st.markdown(
+                        """
+                        <hr style="border: none; height: 2px;width: 100%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                        """,
+                        unsafe_allow_html=True)
+                
+
+
+
+
+                if selected_encoder=='Get Dummies':
+
+
+                    st.markdown(
+                                    """
+                                    <h3 style='text-align: center;'>DataSet Encoded By Get Dummies</h3>
+                                    """,
+                                    unsafe_allow_html=True
+                                    )
+
+
+
+
+                    st.markdown(
+                            """
+                            <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                            """,
+                            unsafe_allow_html=True
+                        )
+
+                    encoded_data = pd.get_dummies(New_clean_data, columns=selected_Nonimal_columns, dtype=bool,drop_first=True)
+        
+                    encoded_data = encoded_data.replace({True: 1, False: 0})
+
+                    st.subheader("DataSet Shape")
+                    st.write(f"Total Number of Rows : {encoded_data.shape[0]}")
+                    st.write(f"Total Number of Columns : {encoded_data.shape[1]}")
+                    st.write("")                        
+                    st.markdown(
+                                            """
+                                            <p style=',color: green;'>Now This DataSet are Ready To Fit to Model, Downolod it And and fit To The Model </p>
+                                            """,
+                                            unsafe_allow_html=True
+                                            ) 
+                    
+                    st.write("")                         
+                    st.dataframe(encoded_data)
+
+
+                    
+
+                elif selected_encoder=='One Hot encoding':
+
+                    st.markdown(
+                                    """
+                                    <h3 style='text-align: center;'>DataSet Encoded By One Hot encoding</h3>
+                                    """,
+                                    unsafe_allow_html=True
+                                    )
+
+
+
+
+                    st.markdown(
+                            """
+                            <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                            """,
+                            unsafe_allow_html=True
+                        )
+
+                    encoded_data = pd.get_dummies(New_clean_data, columns=selected_Nonimal_columns, dtype=bool,drop_first=True)
+        
+                    encoded_data = encoded_data.replace({True: 1, False: 0})
+
+                    st.subheader("DataSet Shape")
+                    st.write(f"Total Number of Rows : {encoded_data.shape[0]}")
+                    st.write(f"Total Number of Columns : {encoded_data.shape[1]}")
+                    st.write("") 
+                    st.markdown(
+                                            """
+                                            <p style='color: green;'>Now This DataSet are Ready To Fit to Model, Downolod it And and fit To The Model </p>
+                                            """,
+                                            unsafe_allow_html=True
+                                            ) 
+                    
+                    st.write("")                     
+                    st.dataframe(encoded_data)
+
+
+                elif selected_encoder=='No Need':
+  
+                        
+                    cleaned_data5=New_clean_data
+                    st.markdown(
+                                    """
+                                    <h3 style='text-align: center;'>Your Encoded and Final DataSet</h3>
+                                    """,
+                                    unsafe_allow_html=True
+                                    ) 
+
+                    st.markdown(
+                            """
+                            <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                            """,
+                            unsafe_allow_html=True
+                        )                                     
+                    st.markdown(
+                                            """
+                                            <p style='text-align: center;color: green;'>Now This DataSet are Ready To Fit to Model, Downolod it And and fit To The Model </p>
+                                            """,
+                                            unsafe_allow_html=True
+                                            ) 
+                    st.write("")                   
+                    st.dataframe(cleaned_data5)
+
+                else:
+                    st.write("")   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            else:
+             
+                st.markdown(
+                            """
+                            <h3 style='text-align: center;'>Do you Want To Scale Your DataSet </h3>
+                            """,
+                            unsafe_allow_html=True
+                            ) 
+
+                st.markdown(
+                    """
+                    <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                    """,
+                    unsafe_allow_html=True
+                ) 
+
+                # Options for the radio button
+                options = ["Standardization", "Min-Max Scaling","No Need"]
+
+                    # Creating the radio button
+                selected_Scaling= st.radio(
+                        label="Select an Scalar:",
+                        options=options,
+                        index=None ,# Preselecting "Option 2"
+                        format_func=lambda x: f"⏩ {x}",  # Adding an arrow before each option
+        
+                    )   
+
+
+                st.markdown(
+                        """
+                        <hr style="border: none; height: 2px;width: 100%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                        """,
+                        unsafe_allow_html=True
+                    )   
+
+
+    # applay Stander Scaling
+                if selected_Scaling =='Standardization' :
+
+                    st.markdown(
+                                    """
+                                    <h3 style='text-align: center;'>Your DataSet are Now Scaled By Standardization</h3>
+                                    """,
+                                    unsafe_allow_html=True
+                                    ) 
+
+                    st.markdown(
+                            """
+                            <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                            """,
+                            unsafe_allow_html=True
+                        )   
+                
+    
+
+                                    # Initialize the scaler
+                    scaler= StandardScaler()
+
+                    # Fit and transform the data
+                    scaled_data = scaler.fit_transform(cleaned_data5)
+
+                    # Convert the scaled data back to a DataFrame
+                    scaled_data = pd.DataFrame(scaled_data, columns=cleaned_data5.columns)
+
+                    st.markdown(
+                                        """
+                                        <p style='text-align: center;color: green;'>Now This DataSet are Ready To Fit to Model, Downolod it And and fit To The Model </p>
+                                        """,
+                                        unsafe_allow_html=True
+                                        ) 
+                    st.write("")
+                    
+                    st.dataframe(scaled_data)
+                    st.balloons()             
+
+
+
+
+
+
+
+
+
+
+    # apply MinMaxScaling
+
+                elif selected_Scaling =='Min-Max Scaling' :
+
+                    st.markdown(
+                                    """
+                                    <h3 style='text-align: center;'>Your DataSet are Now Scaled By Min-Max Scaling</h3>
+                                    """,
+                                    unsafe_allow_html=True
+                                    ) 
+
+                    st.markdown(
+                            """
+                            <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                            """,
+                            unsafe_allow_html=True
+                        )   
+                
+    
+
+                                    # Initialize the scaler
+                    Normaloized_Scale= MinMaxScaler()
+
+                    # Fit and transform the data
+                    scaled_data = Normaloized_Scale.fit_transform(cleaned_data5)
+
+                    # Convert the scaled data back to a DataFrame
+                    scaled_data = pd.DataFrame(scaled_data, columns=cleaned_data5.columns)
+
+                    st.markdown(
+                                    """
+                                    <p style='text-align: center;color: green;'>Now This DataSet are Ready To Fit to Model, Downolod it And and fit To The Model </p>
+                                    """,
+                                    unsafe_allow_html=True
+                                    ) 
+                    st.write("")
+                    # st.write("Now This DataSet are Ready To Fit to Model, Downolod it And and fit To The Model ")
+                    st.dataframe(scaled_data)
+                    st.balloons()
+
+
+
+
+                elif selected_Scaling =='No Need' :
+                    scaled_data=cleaned_data5
+
+                    st.markdown(
+                                    """
+                                    <h3 style='text-align: center;'>Your Clean and Final DataSet</h3>
+                                    """,
+                                    unsafe_allow_html=True
+                                    ) 
+
+                    st.markdown(
+                            """
+                            <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                            """,
+                            unsafe_allow_html=True
+                        )  
+
+                    st.markdown(
+                                        """
+                                        <p style='text-align: center;color: green;'>Now This DataSet are Ready To Fit to Model, Downolod it And and fit To The Model </p>
+                                        """,
+                                        unsafe_allow_html=True
+                                        ) 
+                    st.write("")
+                    st.dataframe(scaled_data)
+                    st.balloons()
+
+
+
+         
+
+
+
+
+
+        except Exception as e:
+            st.error(f"An error occurred while reading the file: {e}")
+    else:
+        st.error("No file uploaded yet!")
+        
+        st.markdown(
+                        """
+                        <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                        """,
+                        unsafe_allow_html=True
+                            )
+
+
+
+
+
+elif selections == 'Classification Models':
+    st.markdown(
+                                    """
+                                    <h1 style='text-align: center;color:orange'>Wellcome to Classification Models</h1>
+                                    """,
+                                    unsafe_allow_html=True
+                                    ) 
+
+    st.markdown(
+                            """
+                            <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                            """,
+                            unsafe_allow_html=True
+                        )     
+
+
+    
+
+    # If 'Upload DataSet' is selected, display the title
+    
+    # submation_file=st.form("Uploding the file")
+    DataSet_name1=st.text_input(placeholder="DataSet Name",label="Insert Dataset Name")
+
+    input=st.expander("Insert your Data Here")
+    # File uploader widget
+    uploaded_file1 = st.file_uploader(label="Upload CSV file", type=["csv"])
+
+    # Check if a file has been uploaded
+    if uploaded_file1 is not None:
+        try:
+            # Read the CSV file into a DataFrame
+            Classification_DataSet = pd.read_csv(uploaded_file1)
+            Classification_DataSet=Classification_DataSet.dropna()
+            st.success("File uploaded successfully!")
+            # Display the DataFrame
+
+            st.title(f"{DataSet_name1} DataSet Loaded")
+            st.write(f"Shape {Classification_DataSet.shape}")
+            st.dataframe(Classification_DataSet)
+            columns_list=Classification_DataSet.columns
+            columns_list2=list()
+            for column in columns_list:
+                columns_list2.append(column)
+
+
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); box-shadow: 10px 4px 8px rgba(3, 225, 129, 0.2);" />
+                """,
+                unsafe_allow_html=True
+            )               
+                
+
+            st.markdown(
+            """
+            <h1 style='text-align: center;'>Select The columns as Final Dataset</h1>
+            """,
+            unsafe_allow_html=True
+            ) 
+
+            option=st.multiselect(
+                    label='Remove The unnecessary  Features',
+                    options=columns_list2,
+                    default=columns_list2
+                )
+                
+            final_DataSet_of_classification=Classification_DataSet[option]
+            st.subheader("Final DataSet")
+            st.dataframe(final_DataSet_of_classification)
+
+            spliting_data=final_DataSet_of_classification.columns
+
+            columns_list3=list()
+
+            for column in spliting_data:
+                columns_list3.append(column)
+
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); box-shadow: 10px 4px 8px rgba(3, 225, 129, 0.2);" />
+                """,
+                unsafe_allow_html=True
+            )
+
+
+         
+            st.markdown(
+            """
+            <h1 style='text-align: center;'>Defining input and Traget Features</h1>
+            """,
+            unsafe_allow_html=True
+            ) 
+
+
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(to right, #ff7e5f, #feb47b);" />
+                """,
+                unsafe_allow_html=True
+            )
+
+
+            col1,col2=st.columns([1,1])
+
+            with col1:
+                st.subheader("Input Features")
+                option2=st.multiselect(
+                    label='select The Input Features',
+                    options=columns_list3,
+                    default=columns_list3
+                )
+                
+                Input_Features=final_DataSet_of_classification[option2]
+                
+                st.dataframe(Input_Features)
+
+
+            # Insert a vertical line between the two columns using HTML/CSS
+                st.markdown(
+                    """
+                    <style>
+                    .vertical-line {
+                        border-left: 2px solid #3498db;
+                        height: 100%;
+                        position: absolute;
+                        left: 50%;
+                        transform: translateX(-50%);
+                    }
+                    </style>
+                    <div class="vertical-line"></div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+
+            with col2:
+                st.subheader("Target features")
+                option3=st.multiselect(
+                    label='select The Target Features',
+                    options=columns_list3,
+                    default=columns_list3
+                )
+                
+                Target_Features=final_DataSet_of_classification[option3]
+                
+                st.dataframe(Target_Features)
+            # Horizontal line with gradient color
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); box-shadow: 10px 4px 8px rgba(3, 225, 129, 0.2);" />
+                """,
+                unsafe_allow_html=True
+            )
+          
+            st.markdown(
+            """
+            <h1 style='text-align: center;'>Applying Train Test spliting</h1>
+            """,
+            unsafe_allow_html=True
+            )  
+
+
+
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(to right, #ff7e5f, #feb47b);" />
+                """,
+                unsafe_allow_html=True
+            )
+
+
+
+
+            x_train,x_test,y_train,y_test=train_test_split(Input_Features,Target_Features,test_size=.20,random_state=101)
+           
+
+            st.markdown(
+            """
+            <h3 style='text-align: center;'> Data Which Were Used In a Training Of Model</h3>
+            """,
+            unsafe_allow_html=True
+            )
+
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+
+
+            col3,col4=st.columns(2)
+            with col3:
+                st.subheader("X Train Data")
+                st.write(f"Shape {x_train.shape}")
+                st.dataframe(x_train)
+
+            with col4:
+                st.subheader("Y Train Data")
+                st.write(f"Shape {y_train.shape}")
+                st.dataframe(y_train)
+
+
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+            )
+            st.markdown(
+            """
+            <h3 style='text-align: center;'> Data Which Were Used In a Testing Of Model</h3>
+            """,
+            unsafe_allow_html=True
+            )
+
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px;width: 50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%); margin: 0 auto;" />
+                """,
+                unsafe_allow_html=True
+            )
+
+
+            col5,col6=st.columns(2)
+            with col5:
+                st.subheader("X Testing Data")
+                st.write(f"Shape {x_test.shape}")
+                st.dataframe(x_test)
+
+            with col6:
+                st.subheader("Y Testing Data")
+                st.write(f"Shape {y_test.shape}")
+                st.dataframe(y_test)
+
+           
+        
+
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+            )
+            st.markdown(
+            """
+            <h1 style='text-align: center;'>Select a Models Which You Want To Train</h1>
+            """,
+            unsafe_allow_html=True
+            )
+
+
+
+
+
+            
+            Model_selection = st.radio(
+                label="Select a Model",
+                options=["LogisticRegression Model","DecisionTreeClassifier Model","RandomForestClassifier Model","GradientBoostingClassifier Model","All Models"],
+                index=None,  # Setting the default selected index to 1 (Banana)
+        
+            )
+
+            # with st.spinner("Traning A Model"):
+            #     time.sleep(10)
+
+            st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+            )
+            
+            
+            st.markdown(
+            """
+            <h1 style='text-align: center;'>Model Detail</h1>
+            """,
+            unsafe_allow_html=True
+            )
+
+
+
+
+# LogisticRegression Model Selection 
+
+
+            if Model_selection=='LogisticRegression Model':
+   
+
+
+                st.markdown(
+                    """
+                    <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                    """,
+                    unsafe_allow_html=True
+                )
+
+            
+                st.markdown(
+                """
+                <h1 style='text-align: center;color:#15B5B0;'>LogisticRegression Model</h1>
+                """,
+                unsafe_allow_html=True
+                )
+
+                st.markdown(
+                    """
+                    <hr style="border: none; height: 2px;width:50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);margin: 0 auto;" />
+                    """,
+                    unsafe_allow_html=True
+                )       
+
+                tablist=["Model accuracy ","Model Prediction","Confusion Matrix"]
+
+                accuracy_Tab,Predication_tab,Confusion_matrix_tab=st.tabs(tablist)
+
+
+
+
+
+                with Predication_tab :   
+                
+
+                    LogisticRegression_model=LogisticRegression()
+
+                    # feed data to LogisticRegression_model
+
+                    LogisticRegression_model.fit(x_train,y_train)
+
+                    # Now Predicted from the LogisticRegression_model
+
+                    Predication_by_LogisticRegression_model=LogisticRegression_model.predict(x_test)
+
+
+                    
+
+
+
+
+                    Predication_by_LogisticRegression_model=pd.DataFrame(Predication_by_LogisticRegression_model)
+                    Predication_by_LogisticRegression_model.rename(columns={0:"Predicted Values"},inplace=True)
+    
+                    Predication_by_LogisticRegression_model=Predication_by_LogisticRegression_model.reset_index()
+                    Predication_by_LogisticRegression_model.drop(columns='index',axis=1,inplace=True)
+
+
+
+                    actual_values=y_test
+                    actual_values=pd.DataFrame(actual_values)
+                    actual_values=actual_values.reset_index()
+                    actual_values.drop(columns='index',axis=1,inplace=True)
+
+        
+                    combind_Result=pd.concat([actual_values,Predication_by_LogisticRegression_model],axis=1)
+                    st.table(combind_Result)
+                
+
+
+
+                with accuracy_Tab:
+
+
+                    LogisticRegression_model_accuracy=accuracy_score(y_test,Predication_by_LogisticRegression_model)
+
+                    LogisticRegression_model_accuracy=LogisticRegression_model_accuracy*100
+
+                    LogisticRegression_model_accuracy=round(LogisticRegression_model_accuracy,2)   
+
+                    st.subheader(f"Model Accuracy : {LogisticRegression_model_accuracy} %")
+
+                
+
+                with Confusion_matrix_tab:
+                    # Create the confusion matrix
+                    cm = confusion_matrix(y_test, Predication_by_LogisticRegression_model)
+
+
+                    Result_c_or_w=calculate_confusion_matrix_metrics(cm)
+                    
+
+                    correct_by_LogisticRegression_model  = Result_c_or_w["Correct Predictions"]
+                    wrong_by_LogisticRegression_model = Result_c_or_w["Wrong Predictions"]
+
+
+
+                    # creating_cunfusion_Matrix(cm,"Blues","LogisticRegression")
+                    a=cm.tolist()
+
+
+                    # correct_by_LogisticRegression_model=(a[0][0])+(a[1][1])
+                    # wrong_by_LogisticRegression_model=(a[0][1])+(a[1][0])
+
+                    # Create the result DataFrame
+                    LogisticRegression_model_result = {
+                        "Prediction Type": ["Correct Prediction", "Wrong Prediction"],
+                        "Count": [correct_by_LogisticRegression_model, wrong_by_LogisticRegression_model]
+                    }
+                    LogisticRegression_model_result = pd.DataFrame(LogisticRegression_model_result)
+
+                    st.markdown(
+                    """
+                    <h1 style='text-align: center;color:#DB1F48;'>Prediction Details</h1>
+                    """,
+                    unsafe_allow_html=True
+                    )
+
+                    st.markdown(
+                        """
+                        <hr style="border: none; height: 2px;width:50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);margin: 0 auto;" />
+                        """,
+                        unsafe_allow_html=True
+                    )  
+
+                    st.table(LogisticRegression_model_result)
+                    creating_cunfusion_Matrix(cm,"Blues","LogisticRegression")
+
+
+
+
+
+# DecisionTreeClassifier Model
+
+            elif Model_selection=='DecisionTreeClassifier Model':
+
+
+                st.markdown(
+                    """
+                    <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                    """,
+                    unsafe_allow_html=True
+                )
+
+            
+                st.markdown(
+                """
+                <h1 style='text-align: center;color:#15B5B0;'>DecisionTreeClassifier Model</h1>
+                """,
+                unsafe_allow_html=True
+                )
+
+                st.markdown(
+                    """
+                    <hr style="border: none; height: 2px;width:50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);margin: 0 auto;" />
+                    """,
+                    unsafe_allow_html=True
+                )       
+
+                tablist=["Model accuracy ","Model Prediction","Confusion Matrix"]
+
+                accuracy_Tab,Predication_tab,Confusion_matrix_tab=st.tabs(tablist)
+
+
+
+
+
+                with Predication_tab :   
+                
+
+                    DecisionTreeClassifier_model=DecisionTreeClassifier()
+
+                    # feed data to LogisticRegression_model
+
+                    DecisionTreeClassifier_model.fit(x_train,y_train)
+
+                    # Now Predicted from the LogisticRegression_model
+
+                    Predication_by_DecisionTreeClassifier_model=DecisionTreeClassifier_model.predict(x_test)
+
+
+                    
+
+
+
+
+                    Predication_by_DecisionTreeClassifier_model=pd.DataFrame(Predication_by_DecisionTreeClassifier_model)
+                    Predication_by_DecisionTreeClassifier_model.rename(columns={0:"Predicted Values"},inplace=True)
+    
+                    Predication_by_DecisionTreeClassifier_model=Predication_by_DecisionTreeClassifier_model.reset_index()
+
+                    Predication_by_DecisionTreeClassifier_model.drop(columns='index',axis=1,inplace=True)
+
+
+
+                    actual_values=y_test
+                    actual_values=pd.DataFrame(actual_values)
+                    actual_values=actual_values.reset_index()
+                    actual_values.drop(columns='index',axis=1,inplace=True)
+
+        
+                    combind_Result=pd.concat([actual_values,Predication_by_DecisionTreeClassifier_model],axis=1)
+                    st.table(combind_Result)
+                
+
+
+
+                with accuracy_Tab:
+
+
+                    DecisionTreeClassifier_model_accuracy=accuracy_score(y_test,Predication_by_DecisionTreeClassifier_model)
+
+                    DecisionTreeClassifier_model_accuracy=DecisionTreeClassifier_model_accuracy*100
+
+                    DecisionTreeClassifier_model_accuracy=round(DecisionTreeClassifier_model_accuracy,2)   
+
+                    st.subheader(f"Model Accuracy : {DecisionTreeClassifier_model_accuracy} %")
+
+
+                
+
+                with Confusion_matrix_tab:
+                    # Create the confusion matrix
+                    cm_DecisionTreeClassifier_model = confusion_matrix(y_test, Predication_by_DecisionTreeClassifier_model)
+        
+
+                    Result_c_or_w=calculate_confusion_matrix_metrics(cm_DecisionTreeClassifier_model)
+                    
+
+                    correct_by_DecisionTreeClassifier_model  = Result_c_or_w["Correct Predictions"]
+                    wrong_by_DecisionTreeClassifier_model = Result_c_or_w["Wrong Predictions"]
+
+
+                    # creating_cunfusion_Matrix(cm,"Blues","LogisticRegression")
+                    # a=cm_DecisionTreeClassifier_model.tolist()
+
+
+                    # # correct_by_DecisionTreeClassifier_model=(a[0][0])+(a[1][1])
+                    # # wrong_by_DecisionTreeClassifier_model=(a[0][1])+(a[1][0])
+
+                    # Create the result DataFrame
+                    DecisionTreeClassifier_model_result = {
+                        "Prediction Type": ["Correct Prediction", "Wrong Prediction"],
+                        "Count": [correct_by_DecisionTreeClassifier_model, wrong_by_DecisionTreeClassifier_model]
+                    }
+
+
+                    DecisionTreeClassifier_model_result = pd.DataFrame(DecisionTreeClassifier_model_result)
+
+                    st.markdown(
+                    """
+                    <h1 style='text-align: center;color:#FF8000;'>Prediction Details</h1>
+                    """,
+                    unsafe_allow_html=True
+                    )
+
+                    st.markdown(
+                        """
+                        <hr style="border: none; height: 2px;width:50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);margin: 0 auto;" />
+                        """,
+                        unsafe_allow_html=True
+                    )  
+
+                    st.table(DecisionTreeClassifier_model_result)
+                    creating_cunfusion_Matrix(cm_DecisionTreeClassifier_model,"viridis","DecisionTreeClassifier")
+
+
+
+
+
+
+
+
+
+
+# RandomForestClassifier Model
+
+            elif Model_selection=='RandomForestClassifier Model': 
+
+
+                st.markdown(
+                    """
+                    <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                    """,
+                    unsafe_allow_html=True
+                )
+
+            
+                st.markdown(
+                """
+                <h1 style='text-align: center;color:#15B5B0;'>RandomForestClassifier Model</h1>
+                """,
+                unsafe_allow_html=True
+                )
+
+                st.markdown(
+                    """
+                    <hr style="border: none; height: 2px;width:50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);margin: 0 auto;" />
+                    """,
+                    unsafe_allow_html=True
+                )       
+
+                tablist=["Model accuracy ","Model Prediction","Confusion Matrix"]
+
+                accuracy_Tab,Predication_tab,Confusion_matrix_tab=st.tabs(tablist)
+
+
+
+
+
+                with Predication_tab :   
+                
+
+                    RandomForestClassifier_model=RandomForestClassifier(n_estimators=100)
+
+                    # feed data to LogisticRegression_model
+
+                    RandomForestClassifier_model.fit(x_train,y_train)
+
+                    # Now Predicted from the LogisticRegression_model
+
+                    Predication_by_RandomForestClassifier_model=RandomForestClassifier_model.predict(x_test)
+
+
+                    
+
+
+
+
+                    Predication_by_RandomForestClassifier_model=pd.DataFrame(Predication_by_RandomForestClassifier_model)
+                    Predication_by_RandomForestClassifier_model.rename(columns={0:"Predicted Values"},inplace=True)
+    
+                    Predication_by_RandomForestClassifier_model=Predication_by_RandomForestClassifier_model.reset_index()
+
+                    Predication_by_RandomForestClassifier_model.drop(columns='index',axis=1,inplace=True)
+
+
+
+                    actual_values=y_test
+                    actual_values=pd.DataFrame(actual_values)
+                    actual_values=actual_values.reset_index()
+                    actual_values.drop(columns='index',axis=1,inplace=True)
+
+        
+                    combind_Result=pd.concat([actual_values,Predication_by_RandomForestClassifier_model],axis=1)
+                    st.table(combind_Result)
+                
+
+
+
+                with accuracy_Tab:
+
+
+                    RandomForestClassifier_model_accuracy=accuracy_score(y_test,Predication_by_RandomForestClassifier_model)
+
+                    RandomForestClassifier_model_accuracy=RandomForestClassifier_model_accuracy*100
+
+                    RandomForestClassifier_model_accuracy=round(RandomForestClassifier_model_accuracy,2)                
+
+
+                    st.subheader(f"Model Accuracy : {RandomForestClassifier_model_accuracy} %")
+
+
+                
+
+                with Confusion_matrix_tab:
+                    # Create the confusion matrix
+                    cm_RandomForestClassifier_model = confusion_matrix(y_test, Predication_by_RandomForestClassifier_model)
+
+
+                    Result_c_or_w=calculate_confusion_matrix_metrics(cm_RandomForestClassifier_model)
+                    
+
+                    correct_by_RandomForestClassifier_model  = Result_c_or_w["Correct Predictions"]
+                    wrong_by_RandomForestClassifier_model = Result_c_or_w["Wrong Predictions"]
+
+                    # creating_cunfusion_Matrix(cm,"Blues","LogisticRegression")
+                    # a=cm_RandomForestClassifier_model.tolist()
+
+
+                    # correct_by_RandomForestClassifier_model=(a[0][0])+(a[1][1])
+                    # wrong_by_RandomForestClassifier_model=(a[0][1])+(a[1][0])
+
+                    # Create the result DataFrame
+                    RandomForestClassifier_model_result = {
+                        "Prediction Type": ["Correct Prediction", "Wrong Prediction"],
+                        "Count": [correct_by_RandomForestClassifier_model, wrong_by_RandomForestClassifier_model]
+                    }
+
+
+                    RandomForestClassifier_model_result = pd.DataFrame(RandomForestClassifier_model_result)
+
+                    st.markdown(
+                    """
+                    <h1 style='text-align: center;color:#FF8000;'>Prediction Details</h1>
+                    """,
+                    unsafe_allow_html=True
+                    )
+
+                    st.markdown(
+                        """
+                        <hr style="border: none; height: 2px;width:50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);margin: 0 auto;" />
+                        """,
+                        unsafe_allow_html=True
+                    )  
+
+                    st.table(RandomForestClassifier_model_result)
+                    creating_cunfusion_Matrix(cm_RandomForestClassifier_model,"YlOrRd","RandomForestClassifier")
+
+
+
+
+
+
+
+
+
+
+
+
+# GradientBoostingClassifier Model
+            elif Model_selection=='GradientBoostingClassifier Model': 
+
+                st.markdown(
+                    """
+                    <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                    """,
+                    unsafe_allow_html=True
+                )
+
+            
+                st.markdown(
+                """
+                <h1 style='text-align: center;color:#15B5B0;'>GradientBoostingClassifier Model</h1>
+                """,
+                unsafe_allow_html=True
+                )
+
+                st.markdown(
+                    """
+                    <hr style="border: none; height: 2px;width:50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);margin: 0 auto;" />
+                    """,
+                    unsafe_allow_html=True
+                )       
+
+                tablist=["Model accuracy ","Model Prediction","Confusion Matrix"]
+
+                accuracy_Tab,Predication_tab,Confusion_matrix_tab=st.tabs(tablist)
+
+
+
+
+
+                with Predication_tab :   
+                
+
+                    GradientBoostingClassifier_model=GradientBoostingClassifier()
+
+                    # feed data to LogisticRegression_model
+
+                    GradientBoostingClassifier_model.fit(x_train,y_train)
+
+                    # Now Predicted from the LogisticRegression_model
+
+                    Predication_by_GradientBoostingClassifier_model=GradientBoostingClassifier_model.predict(x_test)
+
+
+                    
+
+
+
+
+                    Predication_by_GradientBoostingClassifier_model=pd.DataFrame(Predication_by_GradientBoostingClassifier_model)
+                    Predication_by_GradientBoostingClassifier_model.rename(columns={0:"Predicted Values"},inplace=True)
+    
+                    Predication_by_GradientBoostingClassifier_model=Predication_by_GradientBoostingClassifier_model.reset_index()
+
+                    Predication_by_GradientBoostingClassifier_model.drop(columns='index',axis=1,inplace=True)
+
+
+
+                    actual_values=y_test
+                    actual_values=pd.DataFrame(actual_values)
+                    actual_values=actual_values.reset_index()
+                    actual_values.drop(columns='index',axis=1,inplace=True)
+
+        
+                    combind_Result=pd.concat([actual_values,Predication_by_GradientBoostingClassifier_model],axis=1)
+                    st.table(combind_Result)
+                
+
+
+
+                with accuracy_Tab:
+
+
+                    GradientBoostingClassifier_model_accuracy=accuracy_score(y_test,Predication_by_GradientBoostingClassifier_model)
+
+                    GradientBoostingClassifier_model_accuracy=GradientBoostingClassifier_model_accuracy*100
+
+                    GradientBoostingClassifier_model_accuracy=round(GradientBoostingClassifier_model_accuracy,2)   
+
+                    st.subheader(f"Model Accuracy : {GradientBoostingClassifier_model_accuracy} %")
+
+                
+
+                with Confusion_matrix_tab:
+                    # Create the confusion matrix
+                    cm_GradientBoostingClassifie_model = confusion_matrix(y_test, Predication_by_GradientBoostingClassifier_model)
+
+                    Result_c_or_w=calculate_confusion_matrix_metrics(cm_GradientBoostingClassifie_model)
+                    
+
+                    correct_by_GradientBoostingClassifie_model  = Result_c_or_w["Correct Predictions"]
+                    wrong_by_GradientBoostingClassifie_model = Result_c_or_w["Wrong Predictions"]
+
+                    # # creating_cunfusion_Matrix(cm,"Blues","LogisticRegression")
+
+                    # a=cm_GradientBoostingClassifie_model.tolist()
+
+
+                    # correct_by_GradientBoostingClassifie_model=(a[0][0])+(a[1][1])
+                    # wrong_by_GradientBoostingClassifie_model=(a[0][1])+(a[1][0])
+
+                    # Create the result DataFrame
+                    GradientBoostingClassifie_model_result = {
+                        "Prediction Type": ["Correct Prediction", "Wrong Prediction"],
+                        "Count": [correct_by_GradientBoostingClassifie_model, wrong_by_GradientBoostingClassifie_model]
+                    }
+
+
+                    GradientBoostingClassifie_model_result = pd.DataFrame(GradientBoostingClassifie_model_result)
+
+                    st.markdown(
+                    """
+                    <h1 style='text-align: center;color:#FF8000;'>Prediction Details</h1>
+                    """,
+                    unsafe_allow_html=True
+                    )
+
+                    st.markdown(
+                        """
+                        <hr style="border: none; height: 2px;width:50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);margin: 0 auto;" />
+                        """,
+                        unsafe_allow_html=True
+                    )  
+
+                    st.table(GradientBoostingClassifie_model_result)
+                    creating_cunfusion_Matrix(cm_GradientBoostingClassifie_model,"inferno","GradientBoostingClassifier")
+
+
+
+
+
+
+
+
+
+
+
+
+# All Models
+
+            elif Model_selection=='All Models': 
+
+
+
+
+
+                # LogisticRegression model 
+
+                st.markdown(
+                    """
+                    <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                    """,
+                    unsafe_allow_html=True
+                )
+
+            
+                st.markdown(
+                """
+                <h1 style='text-align: center;color:#15B5B0;'>LogisticRegression Model</h1>
+                """,
+                unsafe_allow_html=True
+                )
+
+                st.markdown(
+                    """
+                    <hr style="border: none; height: 2px;width:50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);margin: 0 auto;" />
+                    """,
+                    unsafe_allow_html=True
+                )       
+
+                tablist=["Model accuracy ","Model Prediction","Confusion Matrix"]
+
+                accuracy_Tab,Predication_tab,Confusion_matrix_tab=st.tabs(tablist)
+
+
+
+
+
+                with Predication_tab :   
+                
+
+                    LogisticRegression_model=LogisticRegression()
+
+                    # feed data to LogisticRegression_model
+
+                    LogisticRegression_model.fit(x_train,y_train)
+
+                    # Now Predicted from the LogisticRegression_model
+
+                    Predication_by_LogisticRegression_model=LogisticRegression_model.predict(x_test)
+
+
+                    
+
+
+
+
+                    Predication_by_LogisticRegression_model=pd.DataFrame(Predication_by_LogisticRegression_model)
+                    Predication_by_LogisticRegression_model.rename(columns={0:"Predicted Values"},inplace=True)
+    
+                    Predication_by_LogisticRegression_model=Predication_by_LogisticRegression_model.reset_index()
+                    Predication_by_LogisticRegression_model.drop(columns='index',axis=1,inplace=True)
+
+
+
+                    actual_values=y_test
+                    actual_values=pd.DataFrame(actual_values)
+                    actual_values=actual_values.reset_index()
+                    actual_values.drop(columns='index',axis=1,inplace=True)
+
+        
+                    combind_Result=pd.concat([actual_values,Predication_by_LogisticRegression_model],axis=1)
+                    st.table(combind_Result)
+                
+
+
+
+                with accuracy_Tab:
+
+
+                    LogisticRegression_model_accuracy=accuracy_score(y_test,Predication_by_LogisticRegression_model)
+
+
+                    LogisticRegression_model_accuracy=LogisticRegression_model_accuracy*100
+
+                    LogisticRegression_model_accuracy=round(LogisticRegression_model_accuracy,2)   
+
+                    st.subheader(f"Model Accuracy : {LogisticRegression_model_accuracy} %")
+
+                
+
+                with Confusion_matrix_tab:
+                    # Create the confusion matrix
+                    cm = confusion_matrix(y_test, Predication_by_LogisticRegression_model)
+
+                    Result_c_or_w=calculate_confusion_matrix_metrics(cm)
+                    
+
+                    correct_by_LogisticRegression_model  = Result_c_or_w["Correct Predictions"]
+                    wrong_by_LogisticRegression_model = Result_c_or_w["Wrong Predictions"]
+
+
+                    # # creating_cunfusion_Matrix(cm,"Blues","LogisticRegression")
+                    # b=cm.tolist()
+
+
+                    # correct_by_LogisticRegression_model=(b[0][0])+(b[1][1])
+                    # wrong_by_LogisticRegression_model=(b[0][1])+(b[1][0])
+
+                    # Create the result DataFrame
+                    LogisticRegression_model_result = {
+                        "Prediction Type": ["Correct Prediction", "Wrong Prediction"],
+                        "Count": [correct_by_LogisticRegression_model, wrong_by_LogisticRegression_model]
+                    }
+                    LogisticRegression_model_result = pd.DataFrame(LogisticRegression_model_result)
+
+                    st.markdown(
+                    """
+                    <h1 style='text-align: center;color:#DB1F48;'>Prediction Details</h1>
+                    """,
+                    unsafe_allow_html=True
+                    )
+
+                    st.markdown(
+                        """
+                        <hr style="border: none; height: 2px;width:50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);margin: 0 auto;" />
+                        """,
+                        unsafe_allow_html=True
+                    )  
+
+                    st.table(LogisticRegression_model_result)
+                    creating_cunfusion_Matrix(cm,"Blues","LogisticRegression")
+
+
+
+                st.markdown(
+                    """
+                    <hr style="border: none; height: 2px;width:100%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);margin: 0 auto;" />
+                    """,
+                    unsafe_allow_html=True
+                )    
+
+
+
+
+
+
+
+
+
+
+
+# DecisionTreeClassifier Model
+
+                st.markdown(
+                    """
+                    <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                    """,
+                    unsafe_allow_html=True
+                )
+
+            
+                st.markdown(
+                """
+                <h1 style='text-align: center;color:#FA26A0;'>DecisionTreeClassifier Model</h1>
+                """,
+                unsafe_allow_html=True
+                )
+
+                st.markdown(
+                    """
+                    <hr style="border: none; height: 2px;width:50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);margin: 0 auto;" />
+                    """,
+                    unsafe_allow_html=True
+                )       
+
+                tablist=["Model accuracy ","Model Prediction","Confusion Matrix"]
+
+                accuracy_Tab,Predication_tab,Confusion_matrix_tab=st.tabs(tablist)
+
+
+
+
+
+                with Predication_tab :   
+                
+
+                    DecisionTreeClassifier_model=DecisionTreeClassifier()
+
+                    # feed data to LogisticRegression_model
+
+                    DecisionTreeClassifier_model.fit(x_train,y_train)
+
+                    # Now Predicted from the LogisticRegression_model
+
+                    Predication_by_DecisionTreeClassifier_model=DecisionTreeClassifier_model.predict(x_test)
+
+
+                    
+
+
+
+
+                    Predication_by_DecisionTreeClassifier_model=pd.DataFrame(Predication_by_DecisionTreeClassifier_model)
+                    Predication_by_DecisionTreeClassifier_model.rename(columns={0:"Predicted Values"},inplace=True)
+    
+                    Predication_by_DecisionTreeClassifier_model=Predication_by_DecisionTreeClassifier_model.reset_index()
+
+                    Predication_by_DecisionTreeClassifier_model.drop(columns='index',axis=1,inplace=True)
+
+
+
+                    actual_values=y_test
+                    actual_values=pd.DataFrame(actual_values)
+                    actual_values=actual_values.reset_index()
+                    actual_values.drop(columns='index',axis=1,inplace=True)
+
+        
+                    combind_Result=pd.concat([actual_values,Predication_by_DecisionTreeClassifier_model],axis=1)
+                    st.table(combind_Result)
+                
+
+
+
+                with accuracy_Tab:
+
+
+                    DecisionTreeClassifier_model_accuracy=accuracy_score(y_test,Predication_by_DecisionTreeClassifier_model)
+
+                    DecisionTreeClassifier_model_accuracy=DecisionTreeClassifier_model_accuracy*100
+
+                    DecisionTreeClassifier_model_accuracy=round(DecisionTreeClassifier_model_accuracy,2)   
+
+                    st.subheader(f"Model Accuracy : {DecisionTreeClassifier_model_accuracy} %")
+
+
+                with Confusion_matrix_tab:
+                    # Create the confusion matrix
+                    cm_DecisionTreeClassifier_model = confusion_matrix(y_test, Predication_by_DecisionTreeClassifier_model)
+
+                    Result_c_or_w=calculate_confusion_matrix_metrics(cm_DecisionTreeClassifier_model)
+                    
+
+                    correct_by_DecisionTreeClassifier_model  = Result_c_or_w["Correct Predictions"]
+                    wrong_by_DecisionTreeClassifier_model = Result_c_or_w["Wrong Predictions"]
+
+                    # # creating_cunfusion_Matrix(cm,"Blues","LogisticRegression")
+                    # c=cm_DecisionTreeClassifier_model.tolist()
+
+
+                    # correct_by_DecisionTreeClassifier_model=(c[0][0])+(c[1][1])
+                    # wrong_by_DecisionTreeClassifier_model=(c[0][1])+(c[1][0])
+                    
+
+                    # Create the result DataFrame
+                    DecisionTreeClassifier_model_result = {
+                        "Prediction Type": ["Correct Prediction", "Wrong Prediction"],
+                        "Count": [correct_by_DecisionTreeClassifier_model, wrong_by_DecisionTreeClassifier_model]
+                    }
+
+
+                    DecisionTreeClassifier_model_result = pd.DataFrame(DecisionTreeClassifier_model_result)
+
+                    st.markdown(
+                    """
+                    <h1 style='text-align: center;color:#FF8000;'>Prediction Details</h1>
+                    """,
+                    unsafe_allow_html=True
+                    )
+
+                    st.markdown(
+                        """
+                        <hr style="border: none; height: 2px;width:50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);margin: 0 auto;" />
+                        """,
+                        unsafe_allow_html=True
+                    )  
+
+                    st.table(DecisionTreeClassifier_model_result)
+                    creating_cunfusion_Matrix(cm_DecisionTreeClassifier_model,"viridis","DecisionTreeClassifier")
+                
+
+
+
+
+# RandomForestClassifier Model
+
+                st.markdown(
+                    """
+                    <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                    """,
+                    unsafe_allow_html=True
+                )
+
+            
+                st.markdown(
+                """
+                <h1 style='text-align: center;color:#5DF15D;'>RandomForestClassifier Model</h1>
+                """,
+                unsafe_allow_html=True
+                )
+
+                st.markdown(
+                    """
+                    <hr style="border: none; height: 2px;width:50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);margin: 0 auto;" />
+                    """,
+                    unsafe_allow_html=True
+                )       
+
+                tablist=["Model accuracy ","Model Prediction","Confusion Matrix"]
+
+                accuracy_Tab,Predication_tab,Confusion_matrix_tab=st.tabs(tablist)
+
+
+
+
+
+                with Predication_tab :   
+                
+
+                    RandomForestClassifier_model=RandomForestClassifier(n_estimators=100)
+
+                    # feed data to LogisticRegression_model
+
+                    RandomForestClassifier_model.fit(x_train,y_train)
+
+                    # Now Predicted from the LogisticRegression_model
+
+                    Predication_by_RandomForestClassifier_model=RandomForestClassifier_model.predict(x_test)
+
+
+                    
+
+
+
+
+                    Predication_by_RandomForestClassifier_model=pd.DataFrame(Predication_by_RandomForestClassifier_model)
+                    Predication_by_RandomForestClassifier_model.rename(columns={0:"Predicted Values"},inplace=True)
+    
+                    Predication_by_RandomForestClassifier_model=Predication_by_RandomForestClassifier_model.reset_index()
+
+                    Predication_by_RandomForestClassifier_model.drop(columns='index',axis=1,inplace=True)
+
+
+
+                    actual_values=y_test
+                    actual_values=pd.DataFrame(actual_values)
+                    actual_values=actual_values.reset_index()
+                    actual_values.drop(columns='index',axis=1,inplace=True)
+
+        
+                    combind_Result=pd.concat([actual_values,Predication_by_RandomForestClassifier_model],axis=1)
+                    st.table(combind_Result)
+                
+
+
+
+                with accuracy_Tab:
+
+
+                    RandomForestClassifier_model_accuracy=accuracy_score(y_test,Predication_by_RandomForestClassifier_model)
+
+             
+
+
+
+                    RandomForestClassifier_model_accuracy=RandomForestClassifier_model_accuracy*100
+
+                    RandomForestClassifier_model_accuracy=round(RandomForestClassifier_model_accuracy,2)                
+
+
+                    st.subheader(f"Model Accuracy : {RandomForestClassifier_model_accuracy} %")
+
+                
+
+
+                with Confusion_matrix_tab:
+                    # Create the confusion matrix
+                    cm_RandomForestClassifier_model = confusion_matrix(y_test, Predication_by_RandomForestClassifier_model)
+
+
+                    Result_c_or_w=calculate_confusion_matrix_metrics(cm_RandomForestClassifier_model)
+                    
+
+                    correct_by_RandomForestClassifier_model  = Result_c_or_w["Correct Predictions"]
+                    wrong_by_RandomForestClassifier_model = Result_c_or_w["Wrong Predictions"]
+
+
+                    # # creating_cunfusion_Matrix(cm,"Blues","LogisticRegression")
+                    # d=cm_RandomForestClassifier_model.tolist()
+
+
+                    # correct_by_RandomForestClassifier_model=(d[0][0])+(d[1][1])
+                    # wrong_by_RandomForestClassifier_model=(d[0][1])+(d[1][0])
+                    
+
+                    # Create the result DataFrame
+                    RandomForestClassifier_model_result = {
+                        "Prediction Type": ["Correct Prediction", "Wrong Prediction"],
+                        "Count": [correct_by_RandomForestClassifier_model, wrong_by_RandomForestClassifier_model]
+                    }
+
+
+                    RandomForestClassifier_model_result = pd.DataFrame(RandomForestClassifier_model_result)
+
+                    st.markdown(
+                    """
+                    <h1 style='text-align: center;color:#FF8000;'>Prediction Details</h1>
+                    """,
+                    unsafe_allow_html=True
+                    )
+
+                    st.markdown(
+                        """
+                        <hr style="border: none; height: 2px;width:50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);margin: 0 auto;" />
+                        """,
+                        unsafe_allow_html=True
+                    )  
+
+                    st.table(RandomForestClassifier_model_result)
+                    creating_cunfusion_Matrix(cm_RandomForestClassifier_model,"YlOrRd","RandomForestClassifier")
+
+
+
+                
+
+
+
+# GradientBoostingClassifier Model
+                st.markdown(
+                    """
+                    <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                    """,
+                    unsafe_allow_html=True
+                )
+
+            
+                st.markdown(
+                """
+                <h1 style='text-align: center;color:#15B5B0;'>GradientBoostingClassifier Model</h1>
+                """,
+                unsafe_allow_html=True
+                )
+
+                st.markdown(
+                    """
+                    <hr style="border: none; height: 2px;width:50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);margin: 0 auto;" />
+                    """,
+                    unsafe_allow_html=True
+                )       
+
+                tablist=["Model accuracy ","Model Prediction","Confusion Matrix"]
+
+                accuracy_Tab,Predication_tab,Confusion_matrix_tab=st.tabs(tablist)
+
+
+
+
+
+                with Predication_tab :   
+                
+
+                    GradientBoostingClassifier_model=GradientBoostingClassifier()
+
+                    # feed data to LogisticRegression_model
+
+                    GradientBoostingClassifier_model.fit(x_train,y_train)
+
+                    # Now Predicted from the LogisticRegression_model
+
+                    Predication_by_GradientBoostingClassifier_model=GradientBoostingClassifier_model.predict(x_test)
+
+
+                    
+
+
+
+
+                    Predication_by_GradientBoostingClassifier_model=pd.DataFrame(Predication_by_GradientBoostingClassifier_model)
+                    Predication_by_GradientBoostingClassifier_model.rename(columns={0:"Predicted Values"},inplace=True)
+    
+                    Predication_by_GradientBoostingClassifier_model=Predication_by_GradientBoostingClassifier_model.reset_index()
+
+                    Predication_by_GradientBoostingClassifier_model.drop(columns='index',axis=1,inplace=True)
+
+
+
+                    actual_values=y_test
+                    actual_values=pd.DataFrame(actual_values)
+                    actual_values=actual_values.reset_index()
+                    actual_values.drop(columns='index',axis=1,inplace=True)
+
+        
+                    combind_Result=pd.concat([actual_values,Predication_by_GradientBoostingClassifier_model],axis=1)
+                    st.table(combind_Result)
+                
+
+
+
+                with accuracy_Tab:
+
+
+                    GradientBoostingClassifier_model_accuracy=accuracy_score(y_test,Predication_by_GradientBoostingClassifier_model)
+
+
+                    GradientBoostingClassifier_model_accuracy=GradientBoostingClassifier_model_accuracy*100
+
+                    GradientBoostingClassifier_model_accuracy=round(GradientBoostingClassifier_model_accuracy,2)   
+
+                    st.subheader(f"Model Accuracy : {GradientBoostingClassifier_model_accuracy} %")
+
+                                
+
+                with Confusion_matrix_tab:
+                    # Create the confusion matrix
+                    cm_GradientBoostingClassifie_model = confusion_matrix(y_test, Predication_by_GradientBoostingClassifier_model)
+
+                    Result_c_or_w=calculate_confusion_matrix_metrics(cm_GradientBoostingClassifie_model)
+                    
+
+                    correct_by_GradientBoostingClassifie_model  = Result_c_or_w["Correct Predictions"]
+                    wrong_by_GradientBoostingClassifie_model = Result_c_or_w["Wrong Predictions"]
+
+
+                    # # creating_cunfusion_Matrix(cm,"Blues","LogisticRegression")
+                    # e=cm_GradientBoostingClassifie_model.tolist()
+
+
+                    # correct_by_GradientBoostingClassifie_model=(e[0][0])+(e[1][1])
+                    # wrong_by_GradientBoostingClassifie_model=(e[0][1])+(e[1][0])
+                    
+
+                    # Create the result DataFrame
+                    GradientBoostingClassifie_model_result = {
+                        "Prediction Type": ["Correct Prediction", "Wrong Prediction"],
+                        "Count": [correct_by_GradientBoostingClassifie_model, wrong_by_GradientBoostingClassifie_model]
+                    }
+
+
+                    GradientBoostingClassifie_model_result = pd.DataFrame(GradientBoostingClassifie_model_result)
+
+                    st.markdown(
+                    """
+                    <h1 style='text-align: center;color:#FF8000;'>Prediction Details</h1>
+                    """,
+                    unsafe_allow_html=True
+                    )
+
+                    st.markdown(
+                        """
+                        <hr style="border: none; height: 2px;width:50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);margin: 0 auto;" />
+                        """,
+                        unsafe_allow_html=True
+                    )  
+
+                    st.table(GradientBoostingClassifie_model_result)
+                    creating_cunfusion_Matrix(cm_GradientBoostingClassifie_model,"inferno","GradientBoostingClassifier")
+
+
+
+
+
+
+
+
+
+
+# Overall Model Evualuation
+
+                st.markdown(
+                        """
+                        <hr style="border: none; height: 2px;width:100%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);margin: 0 auto;" />
+                        """,
+                        unsafe_allow_html=True
+                    ) 
+                st.markdown(
+                    """
+                    <h1 style='text-align: center;color:#FF8000;'>All Model Evaluation</h1>
+                    """,
+                    unsafe_allow_html=True
+                    )
+
+                st.markdown(
+                        """
+                        <hr style="border: none; height: 2px;width:50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);margin: 0 auto;" />
+                        """,
+                        unsafe_allow_html=True
+                    ) 
+                
+                Full_info_tab,Visulization_tab=st.tabs(["Full Information ","Result Visulization"])
+
+
+                with Full_info_tab:
+
+                    st.markdown(
+                            """
+                            <h3 style='text-align: center;color:#FF8000;'>Overall Predication Table</h3>
+                            """,
+                            unsafe_allow_html=True
+                            )
+
+                    st.markdown(
+                                """
+                                <hr style="border: none; height: 2px;width:50%; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);margin: 0 auto;" />
+                                """,
+                                unsafe_allow_html=True
+                            )   
+
+
+                    Overall_Result_0f_Model={
+
+                        "Model":["LogisticRegression","DecisionTreeClassifier ","RandomForestClassifier","GradientBoostingClassifier"],
+                        "Model accuracy %":[LogisticRegression_model_accuracy,DecisionTreeClassifier_model_accuracy,RandomForestClassifier_model_accuracy,GradientBoostingClassifier_model_accuracy],
+                        "Correct Prediction":[correct_by_LogisticRegression_model,correct_by_DecisionTreeClassifier_model,correct_by_RandomForestClassifier_model,correct_by_GradientBoostingClassifie_model],
+                        "Wrong Prediction":[wrong_by_LogisticRegression_model,wrong_by_DecisionTreeClassifier_model,wrong_by_RandomForestClassifier_model,wrong_by_GradientBoostingClassifie_model]
+
+                    }    
+
+                    Overall_Result_0f_Model=pd.DataFrame(Overall_Result_0f_Model)
+
+                    Overall_Result_0f_Model=Overall_Result_0f_Model.sort_values(by="Correct Prediction",ascending=False).reset_index()
+                    Overall_Result_0f_Model.drop(columns="index",axis=1,inplace=True)
+                    st.table(Overall_Result_0f_Model)
+
+
+
+
+
+                    # # Plot the combined comparison of all models
+                    # Create the bar plot
+                    fig, ax = plt.subplots(figsize=(10, 6))
+                    bar_width = 0.4
+                    index = range(len(Overall_Result_0f_Model))
+
+                    bar1 = ax.bar(index, Overall_Result_0f_Model['Correct Prediction'], bar_width, label='Correct Prediction', color='Orange')
+                    bar2 = ax.bar([i + bar_width for i in index], Overall_Result_0f_Model['Wrong Prediction'], bar_width, label='Wrong Prediction', color='red')
+
+                    # Add labels and title
+                    ax.set_xlabel("Models")
+                    ax.set_ylabel("Number of Predictions")
+                    ax.set_title("Correct and Wrong Predictions by Models")
+                    ax.set_xticks([i + bar_width / 2 for i in index])
+                    ax.set_xticklabels(Overall_Result_0f_Model['Model'], rotation=0)
+                    ax.legend()
+
+                    # Display the plot in the Streamlit app
+                    st.pyplot(fig)
+                    
+
+
+
+
+                with Visulization_tab:
+                    # Create subplots
+                    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(8, 7))
+
+                    # Plot each confusion matrix
+                    sns.heatmap(cm, annot=True, fmt='d', cmap="viridis", ax=ax1)
+                    ax1.set_xlabel('Predicted', fontsize=8)
+                    ax1.set_ylabel('Actual', fontsize=8)
+                    ax1.set_title('Confusion Matrix for LogisticRegression', fontsize=8)
+
+                    sns.heatmap(cm_DecisionTreeClassifier_model, annot=True, fmt='d', cmap="plasma", ax=ax2)
+                    ax2.set_xlabel('Predicted', fontsize=8)
+                    ax2.set_ylabel('Actual', fontsize=8)
+                    ax2.set_title('Confusion Matrix for DecisionTreeClassifier', fontsize=8)
+
+                    sns.heatmap(cm_GradientBoostingClassifie_model, annot=True, fmt='d', cmap="plasma", ax=ax3)
+                    ax3.set_xlabel('Predicted', fontsize=8)
+                    ax3.set_ylabel('Actual', fontsize=8)
+                    ax3.set_title('Confusion Matrix for GradientBoostingClassifier', fontsize=8)
+
+                    sns.heatmap(cm_RandomForestClassifier_model, annot=True, fmt='d', cmap="plasma", ax=ax4)
+                    ax4.set_xlabel('Predicted', fontsize=8)
+                    ax4.set_ylabel('Actual', fontsize=8)
+                    ax4.set_title('Confusion Matrix for RandomForestClassifier', fontsize=8)
+
+                    # Adjust layout
+                    plt.tight_layout()
+
+                    # Display the plot in the Streamlit app
+                    st.pyplot(fig)
+
+
+
+
+    
+
+
+
+
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+                    )
+                # Sutibal_model=all_Result.loc[,"Models"]
+
+                Sutibal_model = Overall_Result_0f_Model.loc[Overall_Result_0f_Model.index[0],"Model"] 
+ 
+                st.subheader(f"Most sutible Model For {DataSet_name1} DataSet are {Sutibal_model}")
+
+                st.markdown(
+                """
+                <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                """,
+                unsafe_allow_html=True
+                    )  
+                st.balloons()   
+
+
+
+
+
+
+        except Exception as e:
+            st.error(f"An error occurred while reading the file: {e}")
+    else:
+        st.error("No file uploaded yet!")
+        
+        st.markdown(
+                        """
+                        <hr style="border: none; height: 2px; background: linear-gradient(90deg, rgba(216,82,82,1) 13%, rgba(237,242,6,1) 57%, rgba(226,0,255,1) 93%);" />
+                        """,
+                        unsafe_allow_html=True
+                            )
+
+
+
+
+
+
+
+elif selections=="Dashboard":
+
+    def load_file(file, extension):
+        if extension == 'csv':
+            return pd.read_csv(file)
+        elif extension in ['xlsx']:
+            return pd.read_excel(file)
+        
+        else:
+            raise ValueError("Unsupported file extension")
+
+
+    with st.expander("Loading file..."):
+   
+        file=0
+        # If 'Upload DataSet' is selected, display the title
+        
+        # Input for dataset name
+        dataset_name = st.text_input("Insert Dataset Name", placeholder="DataSet Name")
+
+        # File uploader widget
+        uploaded_file = st.file_uploader("Upload a file", type=["csv","xlsx"])
+
+        # Check if a file has been uploaded
+        if uploaded_file is not None:
+            # Extract the file extension
+            file_extension = uploaded_file.name.split('.')[-1]
+            try:
+                # Read the file into a DataFrame
+                data = load_file(uploaded_file, file_extension)
+                st.success("File uploaded and read successfully!")
+                file=1
+
+        
+            except Exception as e:
+                st.error(f"An error occurred while reading the file: {e}")
+
+
+
+    if file==1:
+        # data=pd.read_csv("D:\AI Works\DashBoard\customer.csv")
+
+        rows=data.shape[0]
+        Features=data.shape[1]
+        
+        # Get the data types of each column
+        data_types = data.dtypes
+
+        # Convert to a set to get unique data types
+        unique_data_types = set(data_types)
+
+        # Get the number of unique data types
+        num_unique_data_types = len(unique_data_types)
+
+
+
+        with st.expander("selcting columns"):
+            column=st.selectbox("Select column",options=data.columns)
+            dtype=data[column].dtypes  
+
+
+
+        # Define the HTML and CSS for centered metrics
+        metric_html = """
+        <div style="text-align: center;">
+            <p style="font-size: 20px; margin: 0; color : white;">{label}</p>
+            <p style="font-size: 32px; margin: 0; font-weight: bold;color : white;">{value}</p>
         </div>
         """
+        s=0
+        st.title(f"{dataset_name} DataSet Loaded")
 
-        # Apply custom CSS
-        st.markdown("""
-        <style>
-        .app-description {
-            background-color: #f9f9f9;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px black;
-            MARGIN-TOP: 80PX;
-        }
-        .app-description h1 {
-            color: #333333;
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-        .app-description p {
-            color: #555555;
-            font-size: 18px;
-            line-height: 1.6;
-        }
-                   
-        </style>
-        """, unsafe_allow_html=True)
+        # Create columns for the metrics
+        row_col, Features_col, data_types_col = st.columns(3)
 
-        # Display the HTML content
-        st.markdown(description_html, unsafe_allow_html=True)
+        # Display metrics with centered numbers
+        with row_col:
+            st.markdown(metric_html.format(label="Number of Rows", value=rows), unsafe_allow_html=True)
+
+        with Features_col:
+            st.markdown(metric_html.format(label="Number of Features", value=Features), unsafe_allow_html=True)
+
+        with data_types_col:
+            st.markdown(metric_html.format(label="Unique Data Types", value=num_unique_data_types), unsafe_allow_html=True)
+        
+
+  
+        null_values_percenatge,null_values_bar=st.columns(2)
+
+        with null_values_percenatge:
+            plot_null_values_pie_chart(data)
+        
+        with null_values_bar:
+            plot_null_values_bar_chart(data)
+        
 
 
-    # Call the function in your main app code
-    show_description()
 
+        if dtype=="object":
+            
+            st.title(f"Detail of {column}")
+
+        # Create columns for the metrics
+            pie_chart, bar_chart= st.columns(2)
+            with pie_chart:
+                # Call the function with the DataFrame and column name
+                plot_class_distribution_pie_chart(data,column )
+
+            with bar_chart:
+                # Call the function with the DataFrame and column name
+                plot_class_distribution_bar_chart(data,column )
+
+
+        elif dtype=="int64" or dtype=="float64":
+            plot_continuous_variable(data,column)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+hide_streamlit_style = """
+<style>
+ MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+</style>
+"""
+st.markdown(hide_streamlit_style,unsafe_allow_html=True)
+
+
+    
 
